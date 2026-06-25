@@ -8,13 +8,13 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done
 
 ## Epic 0 — Project Bootstrap
 
-- [ ] Create TanStack Start app (React + TypeScript, strict mode).
-- [ ] Add Tailwind CSS + base config.
-- [ ] Run `shadcn` init; set up custom theme tokens (colors, radius, fonts).
-- [ ] Add core shadcn components: Button, Card, Input, Label, Textarea, Select, Sheet, Popover, AlertDialog, Calendar, Toast/Sonner.
-- [ ] Add Zod; create `src/lib/schemas.ts` placeholder.
-- [ ] Set up `.env` handling and document required vars (see `STACK.md`).
-- [ ] Biome + TypeScript config.
+- [x] Create TanStack Start app (React + TypeScript, strict mode).
+- [x] Add Tailwind CSS + base config.
+- [x] Run `shadcn` init; set up custom theme tokens (colors, radius, fonts).
+- [x] Add core shadcn components: Button, Card, Input, Label, Textarea, Select, Sheet, Popover, AlertDialog, Calendar, Toast/Sonner.
+- [x] Add Zod; create `src/lib/schemas.ts` placeholder.
+- [x] Set up `.env` handling and document required vars (see `STACK.md`).
+- [x] Biome + TypeScript config.
 
 **Acceptance**: `npm run dev` serves a themed blank shell with routing.
 
