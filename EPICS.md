@@ -78,11 +78,11 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done
 
 ## Epic 5 — Dogs
 
-- [ ] `/dogs` list (TanStack Table): name, breed, DOB, entries count.
-- [ ] Add/Edit dog drawer (Sheet) — TanStack Form + Zod (name, breed, DOB DatePicker, notes).
-- [ ] Create/update mutations + query invalidation + toasts.
-- [ ] Dog detail drawer: info + competition entries list; entry click → competition detail.
-- [ ] Delete dog with `restrict` handling: blocked + clear message when entries exist.
+- [x] `/dogs` list (TanStack Table): name, breed, DOB, entries count.
+- [x] Add/Edit dog drawer (Sheet) — TanStack Form + Zod (name, breed, DOB DatePicker, notes).
+- [x] Create/update mutations + query invalidation + toasts.
+- [x] Dog detail drawer: info + competition entries list; entry click → competition detail.
+- [x] Delete dog with `restrict` handling: blocked + clear message when entries exist.
 
 **Acceptance**: full dog CRUD; delete correctly blocked when referenced.
 

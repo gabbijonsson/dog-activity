@@ -155,6 +155,7 @@ export type Database = {
 					id: string
 					name: string
 					notes: string | null
+					withers_height_cm: number | null
 				}
 				Insert: {
 					breed?: string | null
@@ -164,6 +165,7 @@ export type Database = {
 					id?: string
 					name: string
 					notes?: string | null
+					withers_height_cm?: number | null
 				}
 				Update: {
 					breed?: string | null
@@ -173,6 +175,7 @@ export type Database = {
 					id?: string
 					name?: string
 					notes?: string | null
+					withers_height_cm?: number | null
 				}
 				Relationships: [
 					{

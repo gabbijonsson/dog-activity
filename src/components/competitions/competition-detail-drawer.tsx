@@ -4,6 +4,7 @@ import { SectionSkeleton } from '#/components/dashboard/dashboard-primitives.tsx
 import { Button } from '#/components/ui/button.tsx'
 import {
 	Sheet,
+	SheetBody,
 	SheetContent,
 	SheetDescription,
 	SheetHeader,
@@ -38,7 +39,7 @@ export function CompetitionDetailDrawer({
 
 	return (
 		<Sheet open={open} onOpenChange={onOpenChange}>
-			<SheetContent className="w-full overflow-y-auto sm:max-w-md">
+			<SheetContent className="w-full sm:max-w-md">
 				<SheetHeader>
 					<SheetTitle className="display-title pr-8">
 						{competition?.name ?? 'Competition'}
@@ -51,11 +52,11 @@ export function CompetitionDetailDrawer({
 				</SheetHeader>
 
 				{isLoading ? (
-					<div className="mt-6">
+					<SheetBody>
 						<SectionSkeleton rows={5} />
-					</div>
+					</SheetBody>
 				) : competition ? (
-					<div className="mt-6 space-y-6">
+					<SheetBody className="space-y-6">
 						<dl className="space-y-4 text-sm">
 							<DetailRow
 								label="Event date"
@@ -107,11 +108,13 @@ export function CompetitionDetailDrawer({
 						<p className="text-xs text-muted-foreground">
 							Full entries, map, and editing arrive in Epic 6.
 						</p>
-					</div>
+					</SheetBody>
 				) : (
-					<p className="mt-6 text-sm text-muted-foreground">
-						Competition not found.
-					</p>
+					<SheetBody>
+						<p className="text-sm text-muted-foreground">
+							Competition not found.
+						</p>
+					</SheetBody>
 				)}
 			</SheetContent>
 		</Sheet>
