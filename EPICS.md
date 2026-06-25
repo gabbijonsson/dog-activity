@@ -22,19 +22,19 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done
 
 ## Epic 1 — Supabase Backend
 
-- [ ] Create Supabase project; capture URL + keys.
-- [ ] Define enums: `user_role`, `sport`, `nosework_type`, `nosework_class`, `nosework_official_status`, `rally_starts`, `entry_status`, `calendar_event_type`.
-- [ ] Migration: `profiles` + trigger to create profile on `auth.users` insert.
-- [ ] Migration: `dogs`, `competitions`, `nosework_details`, `rally_details`, `entries`, `calendar_events`.
-- [ ] Partial unique indexes for entry constraints:
+- [x] Create Supabase project; capture URL + keys.
+- [x] Define enums: `user_role`, `sport`, `nosework_type`, `nosework_class`, `nosework_official_status`, `rally_starts`, `entry_status`, `calendar_event_type`.
+- [x] Migration: `profiles` + trigger to create profile on `auth.users` insert.
+- [x] Migration: `dogs`, `competitions`, `nosework_details`, `rally_details`, `entries`, `calendar_events`.
+- [x] Partial unique indexes for entry constraints:
   - NoseWork: unique `(competition_id, dog_id)` **and** unique `(competition_id, handler_id)`.
   - Rally: unique `(competition_id, dog_id)`.
-- [ ] Add competition map/drive columns: `location_lat`, `location_lng`, `origin_location`, `drive_distance_meters`, `drive_distance_text`, `drive_duration_seconds`, `drive_duration_text`, `drive_computed_at`.
-- [ ] CHECK/trigger for competition date ordering.
-- [ ] Trigger: auto-generate + sync 4 `calendar_events` per competition on insert/update; cascade on delete.
-- [ ] Enable RLS on all tables; policies (authenticated read-all/write-all, anon denied).
-- [ ] `seed.sql`: 1 user, 2 dogs, 2 competitions (NoseWork + Rally) with details, entries, calendar events.
-- [ ] Generate TypeScript types → `src/lib/database.types.ts`.
+- [x] Add competition map/drive columns: `location_lat`, `location_lng`, `origin_location`, `drive_distance_meters`, `drive_distance_text`, `drive_duration_seconds`, `drive_duration_text`, `drive_computed_at`.
+- [x] CHECK/trigger for competition date ordering.
+- [x] Trigger: auto-generate + sync 4 `calendar_events` per competition on insert/update; cascade on delete.
+- [x] Enable RLS on all tables; policies (authenticated read-all/write-all, anon denied).
+- [x] `seed.sql`: 1 user, 2 dogs, 2 competitions (NoseWork + Rally) with details, entries, calendar events.
+- [x] Generate TypeScript types → `src/lib/database.types.ts`.
 
 **Acceptance**: migrations apply cleanly; seed loads; types generate; RLS verified (anon blocked, authed allowed).
 
