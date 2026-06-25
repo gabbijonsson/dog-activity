@@ -1,12 +1,12 @@
-import { Link } from "@tanstack/react-router";
+import { Link } from '@tanstack/react-router'
 
-import { UserMenu } from "#/components/user-menu.tsx";
+import { UserMenu } from '#/components/user-menu.tsx'
 
 const navItems = [
-	{ to: "/", label: "Dashboard" },
-	{ to: "/competitions", label: "Competitions" },
-	{ to: "/dogs", label: "Dogs" },
-] as const;
+	{ to: '/', label: 'Dashboard' },
+	{ to: '/competitions', label: 'Competitions' },
+	{ to: '/dogs', label: 'Dogs' },
+] as const
 
 export function AppShell({ children }: { children: React.ReactNode }) {
 	return (
@@ -26,7 +26,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 									key={to}
 									to={to}
 									className="nav-link text-sm font-medium"
-									activeProps={{ className: "nav-link is-active" }}
+									activeProps={{ className: 'nav-link is-active' }}
 								>
 									{label}
 								</Link>
@@ -38,5 +38,5 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 			</header>
 			<main className="page-wrap flex-1 py-8">{children}</main>
 		</div>
-	);
+	)
 }

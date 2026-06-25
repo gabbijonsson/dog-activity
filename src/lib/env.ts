@@ -12,20 +12,20 @@ function required(name: string, value: string | undefined): string {
 
 /** Vars needed at runtime on the client. Optional until Supabase/Maps epics. */
 export const clientEnv = {
-	supabaseUrl: import.meta.env.VITE_SUPABASE_URL ?? "",
-	supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY ?? "",
-	googleMapsBrowserKey: import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY ?? "",
+	supabaseUrl: import.meta.env.VITE_SUPABASE_URL ?? '',
+	supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY ?? '',
+	googleMapsBrowserKey: import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY ?? '',
 } as const
 
 /** Supabase client env — required for auth and data fetching. */
 export function requireSupabaseEnv() {
 	return {
 		supabaseUrl: required(
-			"VITE_SUPABASE_URL",
+			'VITE_SUPABASE_URL',
 			import.meta.env.VITE_SUPABASE_URL,
 		),
 		supabaseAnonKey: required(
-			"VITE_SUPABASE_ANON_KEY",
+			'VITE_SUPABASE_ANON_KEY',
 			import.meta.env.VITE_SUPABASE_ANON_KEY,
 		),
 	}
@@ -35,7 +35,7 @@ export function requireSupabaseEnv() {
 export function requireGoogleMapsEnv() {
 	return {
 		googleMapsBrowserKey: required(
-			"VITE_GOOGLE_MAPS_BROWSER_KEY",
+			'VITE_GOOGLE_MAPS_BROWSER_KEY',
 			import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY,
 		),
 	}

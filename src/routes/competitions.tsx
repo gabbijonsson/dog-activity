@@ -1,13 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute } from '@tanstack/react-router'
 
 import {
 	Card,
 	CardDescription,
 	CardHeader,
 	CardTitle,
-} from "#/components/ui/card.tsx"
+} from '#/components/ui/card.tsx'
 
-export const Route = createFileRoute("/competitions")({
+export const Route = createFileRoute('/competitions')({
 	component: CompetitionsPage,
 })
 
