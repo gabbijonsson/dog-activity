@@ -1,14 +1,27 @@
-import { defineConfig } from 'vite'
-import { devtools } from '@tanstack/devtools-vite'
+import tailwindcss from "@tailwindcss/vite";
+import { devtools } from "@tanstack/devtools-vite";
+import { tanstackStart } from "@tanstack/react-start/plugin/vite";
+import viteReact from "@vitejs/plugin-react";
+import { defineConfig, loadEnv } from "vite";
 
-import { tanstackStart } from '@tanstack/react-start/plugin/vite'
+// Empty shell VITE_* vars (e.g. from IDE) shadow .env — drop them before loadEnv.
+for (const key of Object.keys(process.env)) {
+	if (key.startsWith("VITE_") && !process.env[key]) {
+		delete process.env[key];
+	}
+}
 
-import viteReact from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
+export default defineConfig(({ mode }) => {
+	const viteEnv = loadEnv(mode, process.cwd(), "VITE_");
 
-const config = defineConfig({
-  resolve: { tsconfigPaths: true },
-  plugins: [devtools(), tailwindcss(), tanstackStart(), viteReact()],
-})
-
-export default config
+	return {
+		resolve: { tsconfigPaths: true },
+		plugins: [devtools(), tailwindcss(), tanstackStart(), viteReact()],
+		define: Object.fromEntries(
+			Object.entries(viteEnv).map(([key, value]) => [
+				`import.meta.env.${key}`,
+				JSON.stringify(value),
+			]),
+		),
+	};
+});

@@ -1,24 +1,22 @@
+import { TanStackDevtools } from "@tanstack/react-devtools";
+import type { QueryClient } from "@tanstack/react-query";
 import {
+	createRootRouteWithContext,
 	HeadContent,
 	Outlet,
 	Scripts,
-	createRootRouteWithContext,
-} from "@tanstack/react-router"
-import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools"
-import { TanStackDevtools } from "@tanstack/react-devtools"
-import { ThemeProvider } from "next-themes"
-
-import { AppShell } from "#/components/app-shell.tsx"
-import { Toaster } from "#/components/ui/sonner.tsx"
-import TanStackQueryDevtools from "../integrations/tanstack-query/devtools"
-import TanstackQueryProvider from "../integrations/tanstack-query/root-provider"
-
-import appCss from "../styles.css?url"
-
-import type { QueryClient } from "@tanstack/react-query"
+} from "@tanstack/react-router";
+import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+import { ThemeProvider } from "next-themes";
+import { AppShell } from "#/components/app-shell.tsx";
+import { AuthProvider } from "#/components/auth-provider.tsx";
+import { Toaster } from "#/components/ui/sonner.tsx";
+import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
+import TanstackQueryProvider from "../integrations/tanstack-query/root-provider";
+import appCss from "../styles.css?url";
 
 interface MyRouterContext {
-	queryClient: QueryClient
+	queryClient: QueryClient;
 }
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
@@ -44,21 +42,23 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 	}),
 	component: RootComponent,
 	shellComponent: RootDocument,
-})
+});
 
 function RootComponent() {
-	const { queryClient } = Route.useRouteContext()
+	const { queryClient } = Route.useRouteContext();
 
 	return (
 		<TanstackQueryProvider queryClient={queryClient}>
-			<ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-				<AppShell>
-					<Outlet />
-				</AppShell>
-				<Toaster richColors closeButton />
-			</ThemeProvider>
+			<AuthProvider>
+				<ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+					<AppShell>
+						<Outlet />
+					</AppShell>
+					<Toaster richColors closeButton />
+				</ThemeProvider>
+			</AuthProvider>
 		</TanstackQueryProvider>
-	)
+	);
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
@@ -84,5 +84,5 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				<Scripts />
 			</body>
 		</html>
-	)
+	);
 }

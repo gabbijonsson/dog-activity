@@ -42,11 +42,11 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done
 
 ## Epic 2 — App Foundations
 
-- [ ] `src/lib/supabase.ts` typed client (browser + server variants).
-- [ ] `src/lib/queryKeys.ts` centralized query keys.
-- [ ] TanStack Query provider wired into root.
-- [ ] Auth context/provider reading Supabase session.
-- [ ] App shell layout: nav (Dashboard / Competitions / Dogs), user menu, logout.
+- [x] `src/lib/supabase.ts` typed client (browser + server variants).
+- [x] `src/lib/queryKeys.ts` centralized query keys.
+- [x] TanStack Query provider wired into root.
+- [x] Auth context/provider reading Supabase session.
+- [x] App shell layout: nav (Dashboard / Competitions / Dogs), user menu, logout.
 
 **Acceptance**: session state available app-wide; nav renders; queries cache.
 
