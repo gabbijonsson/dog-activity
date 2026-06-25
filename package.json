@@ -14,13 +14,13 @@
     "format": "biome format --write",
     "lint": "biome lint --fix",
     "check": "biome check",
-    "db:types": "supabase gen types typescript --db-url \"postgresql://postgres.jcpfdjfnxnfqhunmiruk:${SUPABASE_DB_PW}@aws-1-eu-north-1.pooler.supabase.com:5432/postgres\" > src/lib/database.types.ts"
+    "db:types": "supabase gen types typescript --local > src/types/database.ts"
   },
   "dependencies": {
     "@daypicker/react": "^10.0.1",
     "@faker-js/faker": "^10.3.0",
     "@supabase/ssr": "^0.12.0",
-    "@supabase/supabase-js": "^2.108.2",
+    "@supabase/supabase-js": "^2.108.1",
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/match-sorter-utils": "latest",
     "@tanstack/react-devtools": "latest",

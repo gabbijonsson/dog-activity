@@ -1,5 +1,7 @@
 -- Competition milestones are datetimes; payment deadline defaults to end of day.
 
+DROP TRIGGER competitions_sync_calendar_events ON public.competitions;
+
 ALTER TABLE public.competitions
   ALTER COLUMN sign_up_opens TYPE timestamptz
     USING ((sign_up_opens + TIME '09:00') AT TIME ZONE 'Europe/Stockholm'),
@@ -62,3 +64,9 @@ BEGIN
   RETURN NEW;
 END;
 $$;
+
+CREATE TRIGGER competitions_sync_calendar_events
+  AFTER INSERT OR UPDATE OF sign_up_opens, sign_up_closes, payment_deadline, event_date, name
+  ON public.competitions
+  FOR EACH ROW
+  EXECUTE FUNCTION public.sync_competition_calendar_events();
