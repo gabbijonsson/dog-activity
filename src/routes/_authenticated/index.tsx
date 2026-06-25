@@ -1,37 +1,58 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useCallback, useState } from 'react'
 
-import {
-	Card,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from '#/components/ui/card.tsx'
+import { MonthCalendar } from '#/components/calendar/month-calendar.tsx'
+import { CompetitionDetailDrawer } from '#/components/competitions/competition-detail-drawer.tsx'
+import { DeadlineCards } from '#/components/dashboard/deadline-cards.tsx'
+import { UpcomingEventsTable } from '#/components/dashboard/upcoming-events-table.tsx'
+import { toDateString } from '#/lib/dates.ts'
 
 export const Route = createFileRoute('/_authenticated/')({
 	component: DashboardPage,
 })
 
 function DashboardPage() {
+	const navigate = useNavigate()
+	const [selectedCompetitionId, setSelectedCompetitionId] = useState<
+		string | null
+	>(null)
+	const [drawerOpen, setDrawerOpen] = useState(false)
+
+	const handleCompetitionSelect = useCallback((competitionId: string) => {
+		setSelectedCompetitionId(competitionId)
+		setDrawerOpen(true)
+	}, [])
+
+	const handleAddCompetition = useCallback(
+		(date: Date) => {
+			void navigate({
+				to: '/competitions',
+				search: { event_date: toDateString(date) },
+			})
+		},
+		[navigate],
+	)
+
 	return (
 		<div className="rise-in space-y-6">
-			<div>
-				<p className="island-kicker">Dog sports competition tracker</p>
-				<h1 className="display-title mt-2 text-3xl font-bold tracking-tight">
-					Dashboard
-				</h1>
-				<p className="mt-2 max-w-xl text-muted-foreground">
-					Track NoseWork and Rally competitions, sign-up deadlines, and entries.
-					Epic 4 fills this page with calendar and cards.
-				</p>
+			<div className="grid gap-6 lg:grid-cols-[minmax(0,65fr)_minmax(0,35fr)] lg:items-start">
+				<MonthCalendar
+					onCompetitionSelect={handleCompetitionSelect}
+					onAddCompetition={handleAddCompetition}
+				/>
+
+				<aside className="min-w-0">
+					<UpcomingEventsTable onCompetitionSelect={handleCompetitionSelect} />
+				</aside>
 			</div>
-			<Card className="island-shell max-w-lg border-0">
-				<CardHeader>
-					<CardTitle>Ready for Epic 1</CardTitle>
-					<CardDescription>
-						Supabase schema, RLS, and seed data come next.
-					</CardDescription>
-				</CardHeader>
-			</Card>
+
+			<DeadlineCards onCompetitionSelect={handleCompetitionSelect} />
+
+			<CompetitionDetailDrawer
+				competitionId={selectedCompetitionId}
+				open={drawerOpen}
+				onOpenChange={setDrawerOpen}
+			/>
 		</div>
 	)
 }

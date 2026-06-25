@@ -65,12 +65,12 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done
 
 ## Epic 4 — Dashboard
 
-- [ ] Data loaders: upcoming sign-ups opening, closing, competitions, and next ~20 calendar events.
-- [ ] Month grid calendar component (month/year navigation).
-- [ ] Day Popover listing that day's events, color-coded by type.
-- [ ] Cards row: "Next 5 Sign-ups Opening", "Next 3 Sign-ups Closing", "Next 5 Competitions".
-- [ ] Upcoming dates list (Table); row click opens competition detail drawer.
-- [ ] Loading + empty states for each section.
+- [x] Data loaders: upcoming sign-ups opening, closing, competitions, and next ~20 calendar events.
+- [x] Month grid calendar component (month/year navigation).
+- [x] Day Popover listing that day's events, color-coded by type.
+- [x] Cards row: "Next 5 Sign-ups Opening", "Next 3 Sign-ups Closing", "Next 5 Competitions".
+- [x] Upcoming dates list (Table); row click opens competition detail drawer.
+- [x] Loading + empty states for each section.
 
 **Acceptance**: dashboard shows seeded data correctly; calendar navigation works; colors match spec.
 

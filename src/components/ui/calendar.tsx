@@ -1,17 +1,17 @@
-import * as React from 'react'
+import {
+	type DayButton,
+	DayPicker,
+	getDefaultClassNames,
+} from '@daypicker/react'
+import { sv } from '@daypicker/react/locale'
 import {
 	ChevronDownIcon,
 	ChevronLeftIcon,
 	ChevronRightIcon,
 } from 'lucide-react'
-import {
-	DayPicker,
-	getDefaultClassNames,
-	type DayButton,
-} from 'react-day-picker'
-
-import { cn } from '#/lib/utils.ts'
+import * as React from 'react'
 import { Button, buttonVariants } from '#/components/ui/button.tsx'
+import { cn } from '#/lib/utils.ts'
 
 function Calendar({
 	className,
@@ -29,6 +29,7 @@ function Calendar({
 
 	return (
 		<DayPicker
+			locale={sv}
 			showOutsideDays={showOutsideDays}
 			className={cn(
 				'group/calendar bg-background p-3 [--cell-size:--spacing(8)] [[data-slot=card-content]_&]:bg-transparent [[data-slot=popover-content]_&]:bg-transparent',
@@ -39,7 +40,7 @@ function Calendar({
 			captionLayout={captionLayout}
 			formatters={{
 				formatMonthDropdown: (date) =>
-					date.toLocaleString('default', { month: 'short' }),
+					date.toLocaleString('default', { month: 'long' }),
 				...formatters,
 			}}
 			classNames={{

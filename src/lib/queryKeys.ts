@@ -31,4 +31,10 @@ export const queryKeys = {
 		byCompetition: (competitionId: string) =>
 			[...queryKeys.calendarEvents.all, 'competition', competitionId] as const,
 	},
+	dashboard: {
+		all: ['dashboard'] as const,
+		summary: () => [...queryKeys.dashboard.all, 'summary'] as const,
+		calendarMonth: (from: string, to: string) =>
+			[...queryKeys.dashboard.all, 'calendar', from, to] as const,
+	},
 } as const
