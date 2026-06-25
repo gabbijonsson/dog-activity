@@ -10,62 +10,73 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as DogsRouteImport } from './routes/dogs'
-import { Route as CompetitionsRouteImport } from './routes/competitions'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedDogsRouteImport } from './routes/_authenticated/dogs'
+import { Route as AuthenticatedCompetitionsRouteImport } from './routes/_authenticated/competitions'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DogsRoute = DogsRouteImport.update({
-  id: '/dogs',
-  path: '/dogs',
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CompetitionsRoute = CompetitionsRouteImport.update({
-  id: '/competitions',
-  path: '/competitions',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IndexRoute = IndexRouteImport.update({
+const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedDogsRoute = AuthenticatedDogsRouteImport.update({
+  id: '/dogs',
+  path: '/dogs',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedCompetitionsRoute =
+  AuthenticatedCompetitionsRouteImport.update({
+    id: '/competitions',
+    path: '/competitions',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/competitions': typeof CompetitionsRoute
-  '/dogs': typeof DogsRoute
+  '/': typeof AuthenticatedIndexRoute
   '/login': typeof LoginRoute
+  '/competitions': typeof AuthenticatedCompetitionsRoute
+  '/dogs': typeof AuthenticatedDogsRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/competitions': typeof CompetitionsRoute
-  '/dogs': typeof DogsRoute
   '/login': typeof LoginRoute
+  '/competitions': typeof AuthenticatedCompetitionsRoute
+  '/dogs': typeof AuthenticatedDogsRoute
+  '/': typeof AuthenticatedIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/competitions': typeof CompetitionsRoute
-  '/dogs': typeof DogsRoute
+  '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
+  '/_authenticated/competitions': typeof AuthenticatedCompetitionsRoute
+  '/_authenticated/dogs': typeof AuthenticatedDogsRoute
+  '/_authenticated/': typeof AuthenticatedIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/competitions' | '/dogs' | '/login'
+  fullPaths: '/' | '/login' | '/competitions' | '/dogs'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/competitions' | '/dogs' | '/login'
-  id: '__root__' | '/' | '/competitions' | '/dogs' | '/login'
+  to: '/login' | '/competitions' | '/dogs' | '/'
+  id:
+    | '__root__'
+    | '/_authenticated'
+    | '/login'
+    | '/_authenticated/competitions'
+    | '/_authenticated/dogs'
+    | '/_authenticated/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  CompetitionsRoute: typeof CompetitionsRoute
-  DogsRoute: typeof DogsRoute
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
 }
 
@@ -78,34 +89,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dogs': {
-      id: '/dogs'
-      path: '/dogs'
-      fullPath: '/dogs'
-      preLoaderRoute: typeof DogsRouteImport
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/competitions': {
-      id: '/competitions'
-      path: '/competitions'
-      fullPath: '/competitions'
-      preLoaderRoute: typeof CompetitionsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/': {
-      id: '/'
+    '/_authenticated/': {
+      id: '/_authenticated/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/dogs': {
+      id: '/_authenticated/dogs'
+      path: '/dogs'
+      fullPath: '/dogs'
+      preLoaderRoute: typeof AuthenticatedDogsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/competitions': {
+      id: '/_authenticated/competitions'
+      path: '/competitions'
+      fullPath: '/competitions'
+      preLoaderRoute: typeof AuthenticatedCompetitionsRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
   }
 }
 
+interface AuthenticatedRouteChildren {
+  AuthenticatedCompetitionsRoute: typeof AuthenticatedCompetitionsRoute
+  AuthenticatedDogsRoute: typeof AuthenticatedDogsRoute
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+}
+
+const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedCompetitionsRoute: AuthenticatedCompetitionsRoute,
+  AuthenticatedDogsRoute: AuthenticatedDogsRoute,
+  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+}
+
+const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
+  AuthenticatedRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  CompetitionsRoute: CompetitionsRoute,
-  DogsRoute: DogsRoute,
+  AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport

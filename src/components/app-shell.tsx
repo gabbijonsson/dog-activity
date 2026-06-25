@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router'
+import { Link, useRouterState } from '@tanstack/react-router'
 
 import { UserMenu } from '#/components/user-menu.tsx'
 
@@ -9,6 +9,19 @@ const navItems = [
 ] as const
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+	const pathname = useRouterState({
+		select: (state) => state.location.pathname,
+	})
+	const isLoginPage = pathname === '/login'
+
+	if (isLoginPage) {
+		return (
+			<div className="flex min-h-screen flex-col items-center justify-center p-4">
+				{children}
+			</div>
+		)
+	}
+
 	return (
 		<div className="flex min-h-screen flex-col">
 			<header className="sticky top-0 z-40 border-b border-border/80 bg-header/90 backdrop-blur-md">

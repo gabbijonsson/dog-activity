@@ -7,7 +7,7 @@ import {
 	CardTitle,
 } from '#/components/ui/card.tsx'
 
-export const Route = createFileRoute('/competitions')({
+export const Route = createFileRoute('/_authenticated/competitions')({
 	component: CompetitionsPage,
 })
 

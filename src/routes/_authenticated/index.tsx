@@ -7,7 +7,9 @@ import {
 	CardTitle,
 } from '#/components/ui/card.tsx'
 
-export const Route = createFileRoute('/')({ component: DashboardPage })
+export const Route = createFileRoute('/_authenticated/')({
+	component: DashboardPage,
+})
 
 function DashboardPage() {
 	return (

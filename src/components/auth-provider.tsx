@@ -22,6 +22,7 @@ interface AuthContextValue {
 	profile: Profile | null
 	isLoading: boolean
 	isAuthenticated: boolean
+	signIn: (email: string, password: string) => Promise<void>
 	signOut: () => Promise<void>
 }
 
@@ -72,13 +73,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		return () => subscription.unsubscribe()
 	}, [queryClient])
 
+	const signIn = useCallback(async (email: string, password: string) => {
+		const supabase = getBrowserSupabase()
+		const { data, error } = await supabase.auth.signInWithPassword({
+			email,
+			password,
+		})
+
+		if (error) throw error
+		setSession(data.session)
+	}, [])
+
 	const signOut = useCallback(async () => {
 		const supabase = getBrowserSupabase()
 		await supabase.auth.signOut()
 		setSession(null)
 		queryClient.removeQueries({ queryKey: queryKeys.auth.all })
 		queryClient.removeQueries({ queryKey: queryKeys.profiles.all })
-		await navigate({ to: '/login' })
+		await navigate({ to: '/login', search: { redirect: '/' } })
 	}, [navigate, queryClient])
 
 	const value = useMemo<AuthContextValue>(
@@ -88,9 +100,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			profile,
 			isLoading,
 			isAuthenticated: !!session,
+			signIn,
 			signOut,
 		}),
-		[session, user, profile, isLoading, signOut],
+		[session, user, profile, isLoading, signIn, signOut],
 	)
 
 	return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

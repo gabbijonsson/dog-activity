@@ -54,10 +54,10 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done
 
 ## Epic 3 — Authentication
 
-- [ ] `/login` page: email/password form (TanStack Form + Zod), shadcn Card.
-- [ ] Sign-in action + error handling (toast on failure).
-- [ ] Route guards: redirect unauthenticated to `/login`, authenticated away from `/login`.
-- [ ] Logout action clears session + redirects.
+- [x] `/login` page: email/password form (TanStack Form + Zod), shadcn Card.
+- [x] Sign-in action + error handling (toast on failure).
+- [x] Route guards: redirect unauthenticated to `/login`, authenticated away from `/login`.
+- [x] Logout action clears session + redirects.
 
 **Acceptance**: can log in/out; protected routes enforce auth.
 
