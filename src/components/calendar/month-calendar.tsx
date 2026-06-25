@@ -11,7 +11,7 @@ import {
 	startOfYear,
 } from 'date-fns'
 import { CalendarPlus } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
 	EventTypeLegend,
 	SectionSkeleton,
@@ -58,6 +58,11 @@ export function MonthCalendar({
 	)
 	const [popoverDay, setPopoverDay] = useState<Date | undefined>()
 	const [popoverOpen, setPopoverOpen] = useState(false)
+	const [mounted, setMounted] = useState(false)
+
+	useEffect(() => {
+		setMounted(true)
+	}, [])
 
 	const { from, to } = monthRange(visibleMonth)
 
@@ -99,7 +104,8 @@ export function MonthCalendar({
 		setVisibleMonth(startOfMonth(new Date()))
 	}
 
-	const isViewingToday = isSameMonth(visibleMonth, new Date())
+	const isViewingToday =
+		mounted && isSameMonth(visibleMonth, startOfMonth(new Date()))
 
 	return (
 		<section className="island-shell rounded-xl p-4 sm:p-6">
