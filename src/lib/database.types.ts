@@ -268,6 +268,30 @@ export type Database = {
 					},
 				]
 			}
+			origin_address_favorites: {
+				Row: {
+					address: string
+					created_at: string
+					id: string
+					label: string
+					sort_order: number
+				}
+				Insert: {
+					address: string
+					created_at?: string
+					id?: string
+					label: string
+					sort_order?: number
+				}
+				Update: {
+					address?: string
+					created_at?: string
+					id?: string
+					label?: string
+					sort_order?: number
+				}
+				Relationships: []
+			}
 			profiles: {
 				Row: {
 					email: string

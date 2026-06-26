@@ -109,7 +109,7 @@ export function CompetitionsTable({
 			},
 			{
 				accessorKey: 'location',
-				header: ({ column }) => <SortHeader column={column} label="Plats" />,
+				header: ({ column }) => <SortHeader column={column} label="Till" />,
 				cell: ({ row }) => row.original.location ?? '—',
 			},
 			{

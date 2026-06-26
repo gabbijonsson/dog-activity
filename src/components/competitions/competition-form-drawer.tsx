@@ -5,8 +5,10 @@ import { useEffect } from 'react'
 import { toast } from 'sonner'
 
 import { DateTimePickerField } from '#/components/competitions/datetime-picker-field.tsx'
+import { OriginAddressFavorites } from '#/components/competitions/origin-address-favorites.tsx'
 import { SectionSkeleton } from '#/components/dashboard/dashboard-primitives.tsx'
 import { DatePickerField } from '#/components/dogs/date-picker-field.tsx'
+import { AddressAutocompleteField } from '#/components/map/address-autocomplete-field.tsx'
 import { Button } from '#/components/ui/button.tsx'
 import { Input } from '#/components/ui/input.tsx'
 import { Label } from '#/components/ui/label.tsx'
@@ -366,33 +368,48 @@ export function CompetitionFormDrawer({
 								}
 							</form.Subscribe>
 
-							<form.Field name="location">
+							<form.Field name="origin_location">
 								{(field) => (
-									<FieldShell label="Plats (destination)" htmlFor={field.name}>
-										<Input
-											id={field.name}
-											placeholder="Tävlingsadress"
+									<div className="space-y-3">
+										<OriginAddressFavorites
+											active={open}
 											value={field.state.value}
-											onBlur={field.handleBlur}
-											onChange={(event) =>
-												field.handleChange(event.target.value)
-											}
+											onSelect={field.handleChange}
 										/>
-									</FieldShell>
+										<FieldShell
+											label="Från"
+											htmlFor={field.name}
+											errors={field.state.meta.errors}
+										>
+											<AddressAutocompleteField
+												id={field.name}
+												active={open}
+												placeholder="Startadress"
+												value={field.state.value}
+												onBlur={field.handleBlur}
+												onChange={field.handleChange}
+												invalid={field.state.meta.errors.length > 0}
+											/>
+										</FieldShell>
+									</div>
 								)}
 							</form.Field>
 
-							<form.Field name="origin_location">
+							<form.Field name="location">
 								{(field) => (
-									<FieldShell label="Från (startadress)" htmlFor={field.name}>
-										<Input
+									<FieldShell
+										label="Till"
+										htmlFor={field.name}
+										errors={field.state.meta.errors}
+									>
+										<AddressAutocompleteField
 											id={field.name}
-											placeholder="Var du brukar åka ifrån"
+											active={open}
+											placeholder="Tävlingsadress"
 											value={field.state.value}
 											onBlur={field.handleBlur}
-											onChange={(event) =>
-												field.handleChange(event.target.value)
-											}
+											onChange={field.handleChange}
+											invalid={field.state.meta.errors.length > 0}
 										/>
 									</FieldShell>
 								)}

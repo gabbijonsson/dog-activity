@@ -28,7 +28,7 @@ Single-page-feel web app for tracking dog sport competitions (NoseWork, Rally Ob
 - **shadcn/ui**: copy-in components, fully themeable, no runtime lock-in. Pure HTML for non-interactive structural markup.
 - **Zod**: one schema source for form validation and for guarding server mutations (entry constraints, date ordering).
 - **Google Maps Platform**: covers all three needs in one billing account with one project:
-  - **Geocoding API** — `location` text → lat/lng (for the pin). Server-side, once per address change.
+  - **Geocoding API (v4)** — `location` text → lat/lng (for the pin). Server-side, once per address change.
   - **Routes API** (or legacy **Distance Matrix API**) — driving distance + time from `origin_location` to `location`. Server-side, result cached in DB; **never recomputed on view**.
   - **Maps JavaScript API** — interactive map + marker in the competition detail drawer. Client-side, renders every open.
   - Use **two API keys**: a server key (no referrer restriction, restricted to Geocoding + Routes, used only in server functions) and a browser key (HTTP-referrer-restricted, restricted to Maps JavaScript API). Keeps billable geocoding/routing calls off the client and limits key abuse.

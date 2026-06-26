@@ -3,6 +3,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { toCompetitionRowPayload } from '#/lib/competition-queries.ts'
 import { competitionSaveSchema } from '#/lib/schemas.ts'
 import { createServerSupabase } from '#/lib/supabase.server.ts'
+import { computeCompetitionMapFields } from '#/server/maps.ts'
 
 export class CompetitionSaveError extends Error {
 	constructor(message: string) {
@@ -79,11 +80,30 @@ export const saveCompetition = createServerFn({ method: 'POST' })
 		}
 
 		const payload = toCompetitionRowPayload(data)
+		const previous = data.id
+			? await supabase
+					.from('competitions')
+					.select(
+						'location, origin_location, location_lat, location_lng, drive_distance_meters, drive_distance_text, drive_duration_seconds, drive_duration_text, drive_computed_at',
+					)
+					.eq('id', data.id)
+					.maybeSingle()
+					.then(({ data: row }) => row)
+			: null
+
+		const mapFields = await computeCompetitionMapFields({
+			location: payload.location,
+			origin_location: payload.origin_location,
+			previous,
+		})
+
+		const rowPayload =
+			mapFields === null ? payload : { ...payload, ...mapFields }
 
 		if (data.id) {
 			const { error } = await supabase
 				.from('competitions')
-				.update(payload)
+				.update(rowPayload)
 				.eq('id', data.id)
 
 			if (error) mapSaveError(error)
@@ -95,7 +115,7 @@ export const saveCompetition = createServerFn({ method: 'POST' })
 		const { data: created, error } = await supabase
 			.from('competitions')
 			.insert({
-				...payload,
+				...rowPayload,
 				created_by: user.id,
 			})
 			.select('id')
