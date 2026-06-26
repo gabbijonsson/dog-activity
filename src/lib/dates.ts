@@ -3,6 +3,9 @@ import {
 	endOfMonth,
 	format,
 	parseISO,
+	setHours,
+	setMinutes,
+	setSeconds,
 	startOfDay,
 	startOfMonth,
 } from 'date-fns'
@@ -61,4 +64,29 @@ export function monthRange(date: Date): { from: string; to: string } {
 
 export function isSameDateString(a: string, b: string): boolean {
 	return toLocalDateString(a) === toLocalDateString(b)
+}
+
+export function splitDateTime(iso: string): { date: string; time: string } {
+	const parsed = parseISO(iso)
+	return {
+		date: format(parsed, 'yyyy-MM-dd'),
+		time: format(parsed, 'HH:mm'),
+	}
+}
+
+export function datetimeFromDateAndTime(
+	dateString: string,
+	timeString: string,
+): string {
+	const [hours, minutes] = timeString.split(':').map(Number)
+	const date = parseISO(dateString)
+	const withTime = setSeconds(
+		setMinutes(setHours(date, hours ?? 0), minutes ?? 0),
+		0,
+	)
+	return withTime.toISOString()
+}
+
+export function parseDateTime(value: string): number {
+	return parseISO(value).getTime()
 }

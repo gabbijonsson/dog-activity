@@ -1,0 +1,565 @@
+import { useForm } from '@tanstack/react-form'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import type { ReactNode } from 'react'
+import { useEffect } from 'react'
+import { toast } from 'sonner'
+
+import { DateTimePickerField } from '#/components/competitions/datetime-picker-field.tsx'
+import { SectionSkeleton } from '#/components/dashboard/dashboard-primitives.tsx'
+import { DatePickerField } from '#/components/dogs/date-picker-field.tsx'
+import { Button } from '#/components/ui/button.tsx'
+import { Input } from '#/components/ui/input.tsx'
+import { Label } from '#/components/ui/label.tsx'
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '#/components/ui/select.tsx'
+import {
+	Sheet,
+	SheetBody,
+	SheetContent,
+	SheetDescription,
+	SheetFooter,
+	SheetHeader,
+	SheetTitle,
+} from '#/components/ui/sheet.tsx'
+import { Textarea } from '#/components/ui/textarea.tsx'
+import {
+	NOSEWORK_CLASS_OPTIONS,
+	NOSEWORK_OFFICIAL_STATUS_OPTIONS,
+	NOSEWORK_TYPE_OPTIONS,
+	RALLY_STARTS_OPTIONS,
+	SPORT_OPTIONS,
+} from '#/lib/competition-labels.ts'
+import {
+	competitionToFormInput,
+	fetchCompetitionById,
+	formInputToSavePayload,
+} from '#/lib/competition-queries.ts'
+import { queryKeys } from '#/lib/queryKeys.ts'
+import {
+	type CompetitionFormInput,
+	competitionFormSchema,
+} from '#/lib/schemas.ts'
+import { getBrowserSupabase } from '#/lib/supabase.ts'
+import { CompetitionSaveError, saveCompetition } from '#/server/competitions.ts'
+
+const emptyValues: CompetitionFormInput = {
+	name: '',
+	sport: 'nosework',
+	location: '',
+	origin_location: '',
+	sign_up_opens_date: '',
+	sign_up_opens_time: '09:00',
+	sign_up_closes_date: '',
+	sign_up_closes_time: '17:00',
+	payment_deadline: '',
+	event_date: '',
+	event_time: '08:00',
+	url: '',
+	notes: '',
+	nosework_type: 'tem_utomhus',
+	nosework_class: 'class_1',
+	nosework_official_status: 'official',
+	number_of_starts: 'single',
+}
+
+interface CompetitionFormDrawerProps {
+	open: boolean
+	onOpenChange: (open: boolean) => void
+	competitionId?: string | null
+	initialEventDate?: string | null
+	onSaved?: (competitionId: string) => void
+}
+
+export function CompetitionFormDrawer({
+	open,
+	onOpenChange,
+	competitionId,
+	initialEventDate,
+	onSaved,
+}: CompetitionFormDrawerProps) {
+	const queryClient = useQueryClient()
+	const isEditing = !!competitionId
+
+	const { data: existingCompetition, isLoading } = useQuery({
+		queryKey: queryKeys.competitions.detail(competitionId ?? 'new'),
+		queryFn: async () => {
+			if (!competitionId) return null
+			const supabase = getBrowserSupabase()
+			return fetchCompetitionById(supabase, competitionId)
+		},
+		enabled: open && isEditing,
+	})
+
+	const mutation = useMutation({
+		mutationFn: async (values: CompetitionFormInput) => {
+			const payload = formInputToSavePayload(values)
+			return saveCompetition({
+				data: {
+					...payload,
+					id: competitionId ?? undefined,
+				},
+			})
+		},
+		onSuccess: (result) => {
+			void queryClient.invalidateQueries({
+				queryKey: queryKeys.competitions.all,
+			})
+			void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
+			void queryClient.invalidateQueries({
+				queryKey: queryKeys.calendarEvents.all,
+			})
+			toast.success(isEditing ? 'Tävling uppdaterad' : 'Tävling tillagd')
+			onOpenChange(false)
+			onSaved?.(result.id)
+		},
+		onError: (error) => {
+			const message =
+				error instanceof CompetitionSaveError
+					? error.message
+					: isEditing
+						? 'Kunde inte uppdatera tävlingen'
+						: 'Kunde inte lägga till tävlingen'
+			toast.error(message)
+		},
+	})
+
+	const form = useForm({
+		defaultValues: emptyValues,
+		validators: {
+			onSubmit: competitionFormSchema,
+		},
+		onSubmit: async ({ value }) => {
+			await mutation.mutateAsync(value)
+		},
+	})
+
+	useEffect(() => {
+		if (!open) {
+			form.reset(emptyValues)
+			return
+		}
+
+		if (isEditing && existingCompetition) {
+			form.reset(competitionToFormInput(existingCompetition))
+			return
+		}
+
+		if (initialEventDate) {
+			form.reset({
+				...emptyValues,
+				event_date: initialEventDate,
+			})
+		}
+	}, [open, isEditing, existingCompetition, initialEventDate, form])
+
+	return (
+		<Sheet open={open} onOpenChange={onOpenChange}>
+			<SheetContent className="w-full sm:max-w-lg">
+				<SheetHeader>
+					<SheetTitle className="display-title pr-8">
+						{isEditing ? 'Redigera tävling' : 'Lägg till tävling'}
+					</SheetTitle>
+					<SheetDescription>
+						{isEditing
+							? 'Uppdatera datum, plats och sportdetaljer.'
+							: 'Registrera en ny tävling — kalenderhändelser skapas automatiskt.'}
+					</SheetDescription>
+				</SheetHeader>
+
+				{isEditing && isLoading ? (
+					<SheetBody>
+						<SectionSkeleton rows={6} />
+					</SheetBody>
+				) : (
+					<form
+						className="flex min-h-0 flex-1 flex-col"
+						onSubmit={(event) => {
+							event.preventDefault()
+							event.stopPropagation()
+							void form.handleSubmit()
+						}}
+					>
+						<SheetBody className="space-y-5">
+							<form.Field name="name">
+								{(field) => (
+									<FieldShell
+										label="Namn"
+										htmlFor={field.name}
+										errors={field.state.meta.errors}
+									>
+										<Input
+											id={field.name}
+											value={field.state.value}
+											onBlur={field.handleBlur}
+											onChange={(event) =>
+												field.handleChange(event.target.value)
+											}
+											aria-invalid={field.state.meta.errors.length > 0}
+										/>
+									</FieldShell>
+								)}
+							</form.Field>
+
+							<form.Field name="sport">
+								{(field) => (
+									<FieldShell label="Sport" htmlFor={field.name}>
+										<Select
+											value={field.state.value}
+											onValueChange={(value) =>
+												field.handleChange(
+													value as CompetitionFormInput['sport'],
+												)
+											}
+										>
+											<SelectTrigger id={field.name} className="w-full">
+												<SelectValue />
+											</SelectTrigger>
+											<SelectContent>
+												{SPORT_OPTIONS.map((option) => (
+													<SelectItem key={option.value} value={option.value}>
+														{option.label}
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
+									</FieldShell>
+								)}
+							</form.Field>
+
+							<form.Subscribe selector={(state) => state.values.sport}>
+								{(sport) =>
+									sport === 'nosework' ? (
+										<div className="space-y-4 rounded-lg border border-border/70 bg-muted/20 p-4">
+											<p className="island-kicker">Nose Work</p>
+											<form.Field name="nosework_type">
+												{(field) => (
+													<FieldShell label="Typ" htmlFor={field.name}>
+														<Select
+															value={field.state.value}
+															onValueChange={(value) =>
+																field.handleChange(
+																	value as CompetitionFormInput['nosework_type'],
+																)
+															}
+														>
+															<SelectTrigger id={field.name} className="w-full">
+																<SelectValue placeholder="Välj typ" />
+															</SelectTrigger>
+															<SelectContent>
+																{NOSEWORK_TYPE_OPTIONS.map((option) => (
+																	<SelectItem
+																		key={option.value}
+																		value={option.value}
+																	>
+																		{option.label}
+																	</SelectItem>
+																))}
+															</SelectContent>
+														</Select>
+													</FieldShell>
+												)}
+											</form.Field>
+											<form.Field name="nosework_class">
+												{(field) => (
+													<FieldShell label="Klass" htmlFor={field.name}>
+														<Select
+															value={field.state.value}
+															onValueChange={(value) =>
+																field.handleChange(
+																	value as CompetitionFormInput['nosework_class'],
+																)
+															}
+														>
+															<SelectTrigger id={field.name} className="w-full">
+																<SelectValue placeholder="Välj klass" />
+															</SelectTrigger>
+															<SelectContent>
+																{NOSEWORK_CLASS_OPTIONS.map((option) => (
+																	<SelectItem
+																		key={option.value}
+																		value={option.value}
+																	>
+																		{option.label}
+																	</SelectItem>
+																))}
+															</SelectContent>
+														</Select>
+													</FieldShell>
+												)}
+											</form.Field>
+											<form.Field name="nosework_official_status">
+												{(field) => (
+													<FieldShell
+														label="Officiell status"
+														htmlFor={field.name}
+													>
+														<Select
+															value={field.state.value}
+															onValueChange={(value) =>
+																field.handleChange(
+																	value as CompetitionFormInput['nosework_official_status'],
+																)
+															}
+														>
+															<SelectTrigger id={field.name} className="w-full">
+																<SelectValue placeholder="Välj status" />
+															</SelectTrigger>
+															<SelectContent>
+																{NOSEWORK_OFFICIAL_STATUS_OPTIONS.map(
+																	(option) => (
+																		<SelectItem
+																			key={option.value}
+																			value={option.value}
+																		>
+																			{option.label}
+																		</SelectItem>
+																	),
+																)}
+															</SelectContent>
+														</Select>
+													</FieldShell>
+												)}
+											</form.Field>
+										</div>
+									) : (
+										<div className="space-y-4 rounded-lg border border-border/70 bg-muted/20 p-4">
+											<p className="island-kicker">Rally</p>
+											<form.Field name="number_of_starts">
+												{(field) => (
+													<FieldShell
+														label="Antal starter"
+														htmlFor={field.name}
+														errors={field.state.meta.errors}
+													>
+														<Select
+															value={field.state.value}
+															onValueChange={(value) =>
+																field.handleChange(
+																	value as CompetitionFormInput['number_of_starts'],
+																)
+															}
+														>
+															<SelectTrigger id={field.name} className="w-full">
+																<SelectValue placeholder="Välj antal starter" />
+															</SelectTrigger>
+															<SelectContent>
+																{RALLY_STARTS_OPTIONS.map((option) => (
+																	<SelectItem
+																		key={option.value}
+																		value={option.value}
+																	>
+																		{option.label}
+																	</SelectItem>
+																))}
+															</SelectContent>
+														</Select>
+													</FieldShell>
+												)}
+											</form.Field>
+										</div>
+									)
+								}
+							</form.Subscribe>
+
+							<form.Field name="location">
+								{(field) => (
+									<FieldShell label="Plats (destination)" htmlFor={field.name}>
+										<Input
+											id={field.name}
+											placeholder="Tävlingsadress"
+											value={field.state.value}
+											onBlur={field.handleBlur}
+											onChange={(event) =>
+												field.handleChange(event.target.value)
+											}
+										/>
+									</FieldShell>
+								)}
+							</form.Field>
+
+							<form.Field name="origin_location">
+								{(field) => (
+									<FieldShell label="Från (startadress)" htmlFor={field.name}>
+										<Input
+											id={field.name}
+											placeholder="Var du brukar åka ifrån"
+											value={field.state.value}
+											onBlur={field.handleBlur}
+											onChange={(event) =>
+												field.handleChange(event.target.value)
+											}
+										/>
+									</FieldShell>
+								)}
+							</form.Field>
+
+							<div className="space-y-4 rounded-lg border border-border/70 p-4">
+								<p className="island-kicker">Datum</p>
+
+								<form.Field name="sign_up_opens_date">
+									{(dateField) => (
+										<form.Field name="sign_up_opens_time">
+											{(timeField) => (
+												<DateTimePickerField
+													dateId={dateField.name}
+													timeId={timeField.name}
+													dateLabel="Anmälan öppnar"
+													dateValue={dateField.state.value}
+													timeValue={timeField.state.value}
+													onDateChange={dateField.handleChange}
+													onTimeChange={timeField.handleChange}
+													onBlur={dateField.handleBlur}
+													dateInvalid={dateField.state.meta.errors.length > 0}
+												/>
+											)}
+										</form.Field>
+									)}
+								</form.Field>
+
+								<form.Field name="sign_up_closes_date">
+									{(dateField) => (
+										<form.Field name="sign_up_closes_time">
+											{(timeField) => (
+												<DateTimePickerField
+													dateId={dateField.name}
+													timeId={timeField.name}
+													dateLabel="Anmälan stänger"
+													dateValue={dateField.state.value}
+													timeValue={timeField.state.value}
+													onDateChange={dateField.handleChange}
+													onTimeChange={timeField.handleChange}
+													onBlur={dateField.handleBlur}
+													dateInvalid={dateField.state.meta.errors.length > 0}
+												/>
+											)}
+										</form.Field>
+									)}
+								</form.Field>
+
+								<form.Field name="payment_deadline">
+									{(field) => (
+										<FieldShell
+											label="Betalningsdatum"
+											htmlFor={field.name}
+											errors={field.state.meta.errors}
+										>
+											<DatePickerField
+												id={field.name}
+												value={field.state.value}
+												onChange={field.handleChange}
+												onBlur={field.handleBlur}
+												aria-invalid={field.state.meta.errors.length > 0}
+											/>
+										</FieldShell>
+									)}
+								</form.Field>
+
+								<form.Field name="event_date">
+									{(dateField) => (
+										<form.Field name="event_time">
+											{(timeField) => (
+												<DateTimePickerField
+													dateId={dateField.name}
+													timeId={timeField.name}
+													dateLabel="Tävlingsdag"
+													dateValue={dateField.state.value}
+													timeValue={timeField.state.value}
+													onDateChange={dateField.handleChange}
+													onTimeChange={timeField.handleChange}
+													onBlur={dateField.handleBlur}
+													dateInvalid={dateField.state.meta.errors.length > 0}
+												/>
+											)}
+										</form.Field>
+									)}
+								</form.Field>
+							</div>
+
+							<form.Field name="url">
+								{(field) => (
+									<FieldShell label="Webbplats" htmlFor={field.name}>
+										<Input
+											id={field.name}
+											type="url"
+											placeholder="https://"
+											value={field.state.value}
+											onBlur={field.handleBlur}
+											onChange={(event) =>
+												field.handleChange(event.target.value)
+											}
+										/>
+									</FieldShell>
+								)}
+							</form.Field>
+
+							<form.Field name="notes">
+								{(field) => (
+									<FieldShell label="Anteckningar" htmlFor={field.name}>
+										<Textarea
+											id={field.name}
+											rows={3}
+											value={field.state.value}
+											onBlur={field.handleBlur}
+											onChange={(event) =>
+												field.handleChange(event.target.value)
+											}
+										/>
+									</FieldShell>
+								)}
+							</form.Field>
+						</SheetBody>
+
+						<SheetFooter>
+							<form.Subscribe
+								selector={(state) => [state.canSubmit, state.isSubmitting]}
+							>
+								{([canSubmit, isSubmitting]) => (
+									<Button
+										type="submit"
+										className="w-full"
+										disabled={!canSubmit || isSubmitting || mutation.isPending}
+									>
+										{isSubmitting || mutation.isPending
+											? 'Sparar…'
+											: isEditing
+												? 'Spara ändringar'
+												: 'Lägg till tävling'}
+									</Button>
+								)}
+							</form.Subscribe>
+						</SheetFooter>
+					</form>
+				)}
+			</SheetContent>
+		</Sheet>
+	)
+}
+
+function FieldShell({
+	label,
+	htmlFor,
+	errors = [],
+	children,
+}: {
+	label: string
+	htmlFor: string
+	errors?: Array<{ message?: string } | undefined>
+	children: ReactNode
+}) {
+	return (
+		<div className="space-y-2">
+			<Label htmlFor={htmlFor}>{label}</Label>
+			{children}
+			{errors.map((error) => (
+				<p key={error?.message} className="text-sm text-destructive">
+					{error?.message}
+				</p>
+			))}
+		</div>
+	)
+}

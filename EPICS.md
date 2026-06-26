@@ -90,13 +90,13 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done
 
 ## Epic 6 — Competitions
 
-- [ ] `/competitions` list (TanStack Table): name, sport, event date, location, status, actions; sort/filter.
-- [ ] Add/Edit competition drawer (Sheet) with common fields, incl. `location` (destination) and `origin_location` ("from") inputs.
-- [ ] Conditional sport fields: NoseWork (type/class/official status), Rally (number of starts).
-- [ ] Server function: create/update competition + sport detail in one transaction (calendar events via trigger).
-- [ ] Validation: Zod schema incl. date ordering; surface server errors.
-- [ ] Competition detail drawer: all fields + entries + calendar events.
-- [ ] Delete competition (AlertDialog) → cascades details/entries/calendar events.
+- [x] `/competitions` list (TanStack Table): name, sport, event date, location, status, actions; sort/filter.
+- [x] Add/Edit competition drawer (Sheet) with common fields, incl. `location` (destination) and `origin_location` ("from") inputs.
+- [x] Conditional sport fields: NoseWork (type/class/official status), Rally (number of starts).
+- [x] Server function: create/update competition + sport detail in one transaction (calendar events via trigger).
+- [x] Validation: Zod schema incl. date ordering; surface server errors.
+- [x] Competition detail drawer: all fields + entries + calendar events.
+- [x] Delete competition (AlertDialog) → cascades details/entries/calendar events.
 
 **Acceptance**: full competition CRUD; sport fields conditional; 4 calendar events appear/sync; cascade verified.
 

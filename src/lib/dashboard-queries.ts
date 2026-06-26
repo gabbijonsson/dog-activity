@@ -1,8 +1,10 @@
+import type { Competition } from '#/lib/competition-queries.ts'
 import type { Database } from '#/lib/database.types.ts'
 import { nowIso } from '#/lib/dates.ts'
 import type { TypedSupabaseClient } from '#/lib/supabase.ts'
 
-export type Competition = Database['public']['Tables']['competitions']['Row']
+export type { Competition } from '#/lib/competition-queries.ts'
+export { fetchCompetitionById } from '#/lib/competition-queries.ts'
 export type CalendarEvent =
 	Database['public']['Tables']['calendar_events']['Row']
 
@@ -49,37 +51,33 @@ export async function fetchDashboardSummary(
 ): Promise<DashboardSummary> {
 	const now = nowIso()
 
-	const [
-		openingResult,
-		closingResult,
-		competitionsResult,
-		eventsResult,
-	] = await Promise.all([
-		supabase
-			.from('competitions')
-			.select(competitionWithEntriesSelect)
-			.gte('sign_up_opens', now)
-			.order('sign_up_opens', { ascending: true })
-			.limit(20),
-		supabase
-			.from('competitions')
-			.select(competitionWithEntriesSelect)
-			.gte('sign_up_closes', now)
-			.order('sign_up_closes', { ascending: true })
-			.limit(3),
-		supabase
-			.from('competitions')
-			.select(competitionWithEntriesSelect)
-			.gte('event_date', now)
-			.order('event_date', { ascending: true })
-			.limit(5),
-		supabase
-			.from('calendar_events')
-			.select('*, competitions(id, name, sport, location)')
-			.gte('event_date', now)
-			.order('event_date', { ascending: true })
-			.limit(20),
-	])
+	const [openingResult, closingResult, competitionsResult, eventsResult] =
+		await Promise.all([
+			supabase
+				.from('competitions')
+				.select(competitionWithEntriesSelect)
+				.gte('sign_up_opens', now)
+				.order('sign_up_opens', { ascending: true })
+				.limit(20),
+			supabase
+				.from('competitions')
+				.select(competitionWithEntriesSelect)
+				.gte('sign_up_closes', now)
+				.order('sign_up_closes', { ascending: true })
+				.limit(3),
+			supabase
+				.from('competitions')
+				.select(competitionWithEntriesSelect)
+				.gte('event_date', now)
+				.order('event_date', { ascending: true })
+				.limit(5),
+			supabase
+				.from('calendar_events')
+				.select('*, competitions(id, name, sport, location)')
+				.gte('event_date', now)
+				.order('event_date', { ascending: true })
+				.limit(20),
+		])
 
 	if (openingResult.error) throw openingResult.error
 	if (closingResult.error) throw closingResult.error
@@ -109,20 +107,6 @@ export async function fetchCalendarEventsForRange(
 		.gte('event_date', from)
 		.lte('event_date', to)
 		.order('event_date', { ascending: true })
-
-	if (error) throw error
-	return data
-}
-
-export async function fetchCompetitionById(
-	supabase: TypedSupabaseClient,
-	id: string,
-): Promise<Competition | null> {
-	const { data, error } = await supabase
-		.from('competitions')
-		.select('*')
-		.eq('id', id)
-		.maybeSingle()
 
 	if (error) throw error
 	return data
