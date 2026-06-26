@@ -104,12 +104,12 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done
 
 ## Epic 6b — Maps & Driving Distance (Google Maps)
 
-- [ ] Google Cloud project; enable Geocoding API, Routes API (or Distance Matrix), Maps JavaScript API.
-- [ ] Create 2 keys: server key (Geocoding + Routes) and browser key (Maps JS, HTTP-referrer restricted); add to env.
-- [ ] `src/server/maps.ts`: geocode `location` → lat/lng; compute driving distance/time from `origin_location` → `location`.
-- [ ] Wire into competition create/update server function: run geocode + distance only when `location`/`origin_location` changes; cache to `drive_*` + `location_lat/lng` + `drive_computed_at`.
-- [ ] `src/components/map/`: Maps JS wrapper rendering a pin at `location_lat/lng`; render on every detail-drawer open.
-- [ ] Detail drawer: show cached distance/time text + the map; graceful state when geocode failed / coords missing.
+- [x] Google Cloud project; enable Geocoding API, Routes API (or Distance Matrix), Maps JavaScript API.
+- [x] Create 2 keys: server key (Geocoding + Routes) and browser key (Maps JS, HTTP-referrer restricted); add to env.
+- [x] `src/server/maps.ts`: geocode `location` → lat/lng; compute driving distance/time from `origin_location` → `location`.
+- [x] Wire into competition create/update server function: run geocode + distance only when `location`/`origin_location` changes; cache to `drive_*` + `location_lat/lng` + `drive_computed_at`.
+- [x] `src/components/map/`: Maps JS wrapper rendering a pin at `location_lat/lng`; render on every detail-drawer open.
+- [x] Detail drawer: show cached distance/time text + the map; graceful state when geocode failed / coords missing.
 
 **Acceptance**: distance/time fetched once and persisted (no API call on view); map with pin renders every open; editing address recomputes.
 

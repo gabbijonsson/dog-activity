@@ -37,4 +37,8 @@ export const queryKeys = {
 		calendarMonth: (from: string, to: string) =>
 			[...queryKeys.dashboard.all, 'calendar', from, to] as const,
 	},
+	originFavorites: {
+		all: ['origin-favorites'] as const,
+		list: () => [...queryKeys.originFavorites.all, 'list'] as const,
+	},
 } as const

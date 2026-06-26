@@ -8,6 +8,7 @@ import {
 	EmptyState,
 	SectionSkeleton,
 } from '#/components/dashboard/dashboard-primitives.tsx'
+import { CompetitionLocationSection } from '#/components/map/competition-map.tsx'
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -183,22 +184,25 @@ export function CompetitionDetailDrawer({
 									label="Betalningsdatum"
 									value={formatDisplayDate(competition.payment_deadline)}
 								/>
-								<DetailRow label="Plats" value={competition.location ?? '—'} />
+								<DetailRow label="Till" value={competition.location ?? '—'} />
 								<DetailRow
 									label="Från"
 									value={competition.origin_location ?? '—'}
 								/>
-								{competition.drive_distance_text &&
-									competition.drive_duration_text && (
-										<DetailRow
-											label="Körning"
-											value={`${competition.drive_distance_text} · ${competition.drive_duration_text}`}
-										/>
-									)}
 								{competition.notes && (
 									<DetailRow label="Anteckningar" value={competition.notes} />
 								)}
 							</dl>
+
+							<CompetitionLocationSection
+								lat={competition.location_lat}
+								lng={competition.location_lng}
+								location={competition.location}
+								originLocation={competition.origin_location}
+								driveDistanceText={competition.drive_distance_text}
+								driveDurationText={competition.drive_duration_text}
+								active={open}
+							/>
 
 							{competition.url && (
 								<Button variant="outline" className="w-full" asChild>

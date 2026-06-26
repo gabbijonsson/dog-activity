@@ -374,6 +374,20 @@ a {
   background: color-mix(in oklab, var(--header-bg) 84%, transparent 16%);
 }
 
+.address-autocomplete-shell {
+  width: 100%;
+}
+
+.address-autocomplete-shell gmp-place-autocomplete {
+  display: block;
+  width: 100%;
+  color-scheme: light;
+}
+
+.dark .address-autocomplete-shell gmp-place-autocomplete {
+  color-scheme: dark;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

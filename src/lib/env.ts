@@ -14,8 +14,16 @@ function required(name: string, value: string | undefined): string {
 export const clientEnv = {
 	supabaseUrl: import.meta.env.VITE_SUPABASE_URL ?? '',
 	supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY ?? '',
-	googleMapsBrowserKey: import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY ?? '',
+	googleMapsBrowserKey:
+		import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY?.trim() ||
+		import.meta.env.VITE_GOOGLE_MAPS_DEMO_KEY?.trim() ||
+		'',
 } as const
+
+/** Browser Maps key with demo fallback — returns empty string when unset. */
+export function getGoogleMapsBrowserKey(): string {
+	return clientEnv.googleMapsBrowserKey
+}
 
 /** Supabase client env — required for auth and data fetching. */
 export function requireSupabaseEnv() {
@@ -33,10 +41,11 @@ export function requireSupabaseEnv() {
 
 /** Google Maps browser key — required only when rendering maps (Epic 6b). */
 export function requireGoogleMapsEnv() {
+	const key = getGoogleMapsBrowserKey()
 	return {
 		googleMapsBrowserKey: required(
 			'VITE_GOOGLE_MAPS_BROWSER_KEY',
-			import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY,
+			key || undefined,
 		),
 	}
 }
