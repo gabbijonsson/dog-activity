@@ -8,10 +8,11 @@ import {
 	type SortingState,
 	useReactTable,
 } from '@tanstack/react-table'
-import { ArrowUpDown } from 'lucide-react'
+import { ArrowUpDown, ChevronRight } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import {
 	EmptyState,
+	ErrorState,
 	SectionSkeleton,
 } from '#/components/dashboard/dashboard-primitives.tsx'
 import { EntryCountBadge } from '#/components/dogs/entry-count-badge.tsx'
@@ -24,6 +25,7 @@ import {
 	TableHeader,
 	TableRow,
 } from '#/components/ui/table.tsx'
+import { activateOnKeyboard } from '#/lib/a11y.ts'
 import { formatDisplayDate } from '#/lib/dates.ts'
 import { type DogListItem, fetchDogsList } from '#/lib/dog-queries.ts'
 import { queryKeys } from '#/lib/queryKeys.ts'
@@ -42,6 +44,7 @@ export function DogsTable({ onDogSelect }: DogsTableProps) {
 		data: dogs = [],
 		isLoading,
 		isError,
+		refetch,
 	} = useQuery({
 		queryKey: queryKeys.dogs.list(),
 		queryFn: async () => {
@@ -99,15 +102,18 @@ export function DogsTable({ onDogSelect }: DogsTableProps) {
 		getSortedRowModel: getSortedRowModel(),
 	})
 
+	const sortedRows = table.getRowModel().rows
+
 	if (isLoading) {
 		return <SectionSkeleton rows={4} />
 	}
 
 	if (isError) {
 		return (
-			<EmptyState
+			<ErrorState
 				title="Kunde inte ladda hundar"
-				description="Uppdatera sidan för att försöka igen."
+				description="Kontrollera anslutningen och försök igen."
+				onRetry={() => void refetch()}
 			/>
 		)
 	}
@@ -122,39 +128,91 @@ export function DogsTable({ onDogSelect }: DogsTableProps) {
 	}
 
 	return (
-		<Table>
-			<TableHeader>
-				{table.getHeaderGroups().map((headerGroup) => (
-					<TableRow key={headerGroup.id}>
-						{headerGroup.headers.map((header) => (
-							<TableHead key={header.id}>
-								{header.isPlaceholder
-									? null
-									: flexRender(
-											header.column.columnDef.header,
-											header.getContext(),
-										)}
-							</TableHead>
+		<>
+			<ul className="space-y-3 md:hidden">
+				{sortedRows.map((row) => {
+					const dog = row.original
+					const meta = [
+						dog.breed,
+						dog.date_of_birth && formatDisplayDate(dog.date_of_birth),
+					]
+						.filter(Boolean)
+						.join(' · ')
+
+					return (
+						<li key={row.id} className="record-card record-card-accent-dog">
+							<button
+								type="button"
+								className="flex w-full items-center gap-3 px-4 py-3.5 text-left"
+								onClick={() => onDogSelect(dog.id)}
+							>
+								<div className="min-w-0 flex-1">
+									<p className="font-medium leading-snug">{dog.name}</p>
+									{meta ? (
+										<p className="mt-1 text-xs text-muted-foreground">{meta}</p>
+									) : (
+										<p className="mt-1 text-xs text-muted-foreground">
+											Ingen ras eller födelsedatum
+										</p>
+									)}
+									<p className="mt-2 text-[0.68rem] font-semibold uppercase tracking-wide text-muted-foreground">
+										Anmälningar
+									</p>
+								</div>
+								<div className="flex shrink-0 flex-col items-end gap-2">
+									<EntryCountBadge count={dog.entry_count} />
+									<ChevronRight
+										className="size-4 text-muted-foreground"
+										aria-hidden="true"
+									/>
+								</div>
+							</button>
+						</li>
+					)
+				})}
+			</ul>
+
+			<div className="hidden md:block">
+				<Table>
+					<TableHeader>
+						{table.getHeaderGroups().map((headerGroup) => (
+							<TableRow key={headerGroup.id}>
+								{headerGroup.headers.map((header) => (
+									<TableHead key={header.id}>
+										{header.isPlaceholder
+											? null
+											: flexRender(
+													header.column.columnDef.header,
+													header.getContext(),
+												)}
+									</TableHead>
+								))}
+							</TableRow>
 						))}
-					</TableRow>
-				))}
-			</TableHeader>
-			<TableBody>
-				{table.getRowModel().rows.map((row) => (
-					<TableRow
-						key={row.id}
-						className="cursor-pointer"
-						onClick={() => onDogSelect(row.original.id)}
-					>
-						{row.getVisibleCells().map((cell) => (
-							<TableCell key={cell.id}>
-								{flexRender(cell.column.columnDef.cell, cell.getContext())}
-							</TableCell>
+					</TableHeader>
+					<TableBody>
+						{sortedRows.map((row) => (
+							<TableRow
+								key={row.id}
+								tabIndex={0}
+								className="cursor-pointer"
+								aria-label={`Öppna ${row.original.name}`}
+								onClick={() => onDogSelect(row.original.id)}
+								onKeyDown={(event) =>
+									activateOnKeyboard(event, () => onDogSelect(row.original.id))
+								}
+							>
+								{row.getVisibleCells().map((cell) => (
+									<TableCell key={cell.id}>
+										{flexRender(cell.column.columnDef.cell, cell.getContext())}
+									</TableCell>
+								))}
+							</TableRow>
 						))}
-					</TableRow>
-				))}
-			</TableBody>
-		</Table>
+					</TableBody>
+				</Table>
+			</div>
+		</>
 	)
 }
 

@@ -7,7 +7,12 @@ import { DeadlineCards } from '#/components/dashboard/deadline-cards.tsx'
 import { UpcomingEventsTable } from '#/components/dashboard/upcoming-events-table.tsx'
 import { toDateString } from '#/lib/dates.ts'
 
+import { pageTitle } from '#/lib/page-meta.ts'
+
 export const Route = createFileRoute('/_authenticated/')({
+	head: () => ({
+		meta: [{ title: pageTitle('Översikt') }],
+	}),
 	component: DashboardPage,
 })
 

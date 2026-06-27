@@ -27,8 +27,13 @@ const competitionsSearchSchema = z.object({
 	event_date: z.string().optional(),
 })
 
+import { pageTitle } from '#/lib/page-meta.ts'
+
 export const Route = createFileRoute('/_authenticated/competitions')({
 	validateSearch: competitionsSearchSchema,
+	head: () => ({
+		meta: [{ title: pageTitle('Tävlingar') }],
+	}),
 	component: CompetitionsPage,
 })
 

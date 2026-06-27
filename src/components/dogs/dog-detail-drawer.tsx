@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { CompetitionDetailDrawer } from '#/components/competitions/competition-detail-drawer.tsx'
 import {
 	EmptyState,
+	ErrorState,
 	SectionSkeleton,
 } from '#/components/dashboard/dashboard-primitives.tsx'
 import {
@@ -58,7 +59,12 @@ export function DogDetailDrawer({
 	>(null)
 	const [competitionDrawerOpen, setCompetitionDrawerOpen] = useState(false)
 
-	const { data: dog, isLoading } = useQuery({
+	const {
+		data: dog,
+		isLoading,
+		isError,
+		refetch,
+	} = useQuery({
 		queryKey: queryKeys.dogs.detail(dogId ?? 'none'),
 		queryFn: async () => {
 			if (!dogId) return null
@@ -108,6 +114,14 @@ export function DogDetailDrawer({
 					{isLoading ? (
 						<SheetBody>
 							<SectionSkeleton rows={5} />
+						</SheetBody>
+					) : isError ? (
+						<SheetBody>
+							<ErrorState
+								title="Kunde inte ladda hund"
+								description="Kontrollera anslutningen och försök igen."
+								onRetry={() => void refetch()}
+							/>
 						</SheetBody>
 					) : dog ? (
 						<SheetBody className="space-y-6">

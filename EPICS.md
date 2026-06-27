@@ -130,11 +130,11 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done
 
 ## Epic 8 — Polish
 
-- [ ] Responsive/mobile layout pass (calendar, tables, drawers).
-- [ ] Global loading, empty, and error states.
-- [ ] Toast coverage for all mutations.
-- [ ] Accessibility pass (labels, focus traps in Sheets/Dialogs, keyboard nav).
-- [ ] Favicon, page titles, 404 route.
+- [x] Responsive/mobile layout pass (calendar, tables, drawers).
+- [x] Global loading, empty, and error states.
+- [x] Toast coverage for all mutations.
+- [x] Accessibility pass (labels, focus traps in Sheets/Dialogs, keyboard nav).
+- [x] Favicon, page titles, 404 route.
 
 **Acceptance**: usable on mobile; consistent feedback; no dead-end states.
 

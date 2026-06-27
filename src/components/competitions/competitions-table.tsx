@@ -10,12 +10,13 @@ import {
 	type SortingState,
 	useReactTable,
 } from '@tanstack/react-table'
-import { ArrowUpDown, Pencil, Trash2 } from 'lucide-react'
+import { ArrowUpDown, MapPin, Pencil, Trash2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import { CompetitionStatusBadge } from '#/components/competitions/competition-status-badge.tsx'
 import {
 	EmptyState,
+	ErrorState,
 	SectionSkeleton,
 } from '#/components/dashboard/dashboard-primitives.tsx'
 import { Button } from '#/components/ui/button.tsx'
@@ -35,6 +36,7 @@ import {
 	TableHeader,
 	TableRow,
 } from '#/components/ui/table.tsx'
+import { activateOnKeyboard } from '#/lib/a11y.ts'
 import {
 	type CompetitionListItem,
 	fetchCompetitionsList,
@@ -66,6 +68,7 @@ export function CompetitionsTable({
 		data: competitions = [],
 		isLoading,
 		isError,
+		refetch,
 	} = useQuery({
 		queryKey: queryKeys.competitions.list(),
 		queryFn: async () => {
@@ -171,6 +174,7 @@ export function CompetitionsTable({
 
 	const sportFilter =
 		(table.getColumn('sport')?.getFilterValue() as string | undefined) ?? 'all'
+	const filteredRows = table.getRowModel().rows
 
 	if (isLoading) {
 		return <SectionSkeleton rows={5} />
@@ -178,9 +182,10 @@ export function CompetitionsTable({
 
 	if (isError) {
 		return (
-			<EmptyState
+			<ErrorState
 				title="Kunde inte ladda tävlingar"
-				description="Uppdatera sidan för att försöka igen."
+				description="Kontrollera anslutningen och försök igen."
+				onRetry={() => void refetch()}
 			/>
 		)
 	}
@@ -222,50 +227,137 @@ export function CompetitionsTable({
 				</Select>
 			</div>
 
-			<Table>
-				<TableHeader>
-					{table.getHeaderGroups().map((headerGroup) => (
-						<TableRow key={headerGroup.id}>
-							{headerGroup.headers.map((header) => (
-								<TableHead key={header.id}>
-									{header.isPlaceholder
-										? null
-										: flexRender(
-												header.column.columnDef.header,
-												header.getContext(),
-											)}
-								</TableHead>
-							))}
-						</TableRow>
-					))}
-				</TableHeader>
-				<TableBody>
-					{table.getRowModel().rows.length === 0 ? (
-						<TableRow>
-							<TableCell
-								colSpan={columns.length}
-								className="h-24 text-center text-muted-foreground"
-							>
-								Inga tävlingar matchar filtret.
-							</TableCell>
-						</TableRow>
-					) : (
-						table.getRowModel().rows.map((row) => (
-							<TableRow
-								key={row.id}
-								className="cursor-pointer"
-								onClick={() => onCompetitionSelect(row.original.id)}
-							>
-								{row.getVisibleCells().map((cell) => (
-									<TableCell key={cell.id}>
-										{flexRender(cell.column.columnDef.cell, cell.getContext())}
-									</TableCell>
+			<div className="md:hidden">
+				{filteredRows.length === 0 ? (
+					<EmptyState
+						title="Inga tävlingar matchar filtret"
+						description="Prova ett annat sökord eller sportfilter."
+					/>
+				) : (
+					<ul className="space-y-3">
+						{filteredRows.map((row) => {
+							const competition = row.original
+							const accentClass =
+								competition.sport === 'nosework'
+									? 'record-card-accent-nosework'
+									: 'record-card-accent-rally'
+
+							return (
+								<li key={row.id} className={cn('record-card', accentClass)}>
+									<button
+										type="button"
+										className="w-full px-4 py-3.5 text-left"
+										onClick={() => onCompetitionSelect(competition.id)}
+									>
+										<div className="flex items-start justify-between gap-3">
+											<p className="min-w-0 font-medium leading-snug">
+												{competition.name}
+											</p>
+											<CompetitionStatusBadge status={competition.status} />
+										</div>
+										<p className="mt-2 text-xs font-semibold text-primary tabular-nums">
+											<time dateTime={competition.event_date}>
+												{formatDisplayDateTime(competition.event_date)}
+											</time>
+										</p>
+										<p className="mt-1 text-xs text-muted-foreground">
+											{sportLabel(competition.sport)}
+										</p>
+										{competition.location ? (
+											<p className="mt-2 flex items-start gap-1.5 text-xs text-muted-foreground">
+												<MapPin
+													className="mt-0.5 size-3.5 shrink-0"
+													aria-hidden="true"
+												/>
+												<span className="line-clamp-2">
+													{competition.location}
+												</span>
+											</p>
+										) : null}
+									</button>
+									<div className="flex border-t border-border/70">
+										<Button
+											type="button"
+											variant="ghost"
+											className="h-10 flex-1 rounded-none"
+											onClick={() => onEdit(competition.id)}
+										>
+											<Pencil className="size-4" aria-hidden="true" />
+											Redigera
+										</Button>
+										<Button
+											type="button"
+											variant="ghost"
+											className="h-10 flex-1 rounded-none text-destructive hover:text-destructive"
+											onClick={() => onDelete(competition.id)}
+										>
+											<Trash2 className="size-4" aria-hidden="true" />
+											Ta bort
+										</Button>
+									</div>
+								</li>
+							)
+						})}
+					</ul>
+				)}
+			</div>
+
+			<div className="hidden md:block">
+				<Table>
+					<TableHeader>
+						{table.getHeaderGroups().map((headerGroup) => (
+							<TableRow key={headerGroup.id}>
+								{headerGroup.headers.map((header) => (
+									<TableHead key={header.id}>
+										{header.isPlaceholder
+											? null
+											: flexRender(
+													header.column.columnDef.header,
+													header.getContext(),
+												)}
+									</TableHead>
 								))}
 							</TableRow>
-						))
-					)}
-				</TableBody>
-			</Table>
+						))}
+					</TableHeader>
+					<TableBody>
+						{filteredRows.length === 0 ? (
+							<TableRow>
+								<TableCell
+									colSpan={columns.length}
+									className="h-24 text-center text-muted-foreground"
+								>
+									Inga tävlingar matchar filtret.
+								</TableCell>
+							</TableRow>
+						) : (
+							filteredRows.map((row) => (
+								<TableRow
+									key={row.id}
+									tabIndex={0}
+									className="cursor-pointer"
+									aria-label={`Öppna ${row.original.name}`}
+									onClick={() => onCompetitionSelect(row.original.id)}
+									onKeyDown={(event) =>
+										activateOnKeyboard(event, () =>
+											onCompetitionSelect(row.original.id),
+										)
+									}
+								>
+									{row.getVisibleCells().map((cell) => (
+										<TableCell key={cell.id}>
+											{flexRender(
+												cell.column.columnDef.cell,
+												cell.getContext(),
+											)}
+										</TableCell>
+									))}
+								</TableRow>
+							))
+						)}
+					</TableBody>
+				</Table>
+			</div>
 		</div>
 	)
 }

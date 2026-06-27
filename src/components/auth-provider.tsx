@@ -10,6 +10,8 @@ import {
 	useMemo,
 	useState,
 } from 'react'
+import { toast } from 'sonner'
+
 import type { Database } from '#/lib/database.types.ts'
 import { queryKeys } from '#/lib/queryKeys.ts'
 import { getBrowserSupabase } from '#/lib/supabase.ts'
@@ -90,6 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		setSession(null)
 		queryClient.removeQueries({ queryKey: queryKeys.auth.all })
 		queryClient.removeQueries({ queryKey: queryKeys.profiles.all })
+		toast.success('Utloggad')
 		await navigate({ to: '/login', search: { redirect: '/' } })
 	}, [navigate, queryClient])
 

@@ -13,6 +13,7 @@ import {
 import { CalendarPlus } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import {
+	ErrorState,
 	EventTypeLegend,
 	SectionSkeleton,
 } from '#/components/dashboard/dashboard-primitives.tsx'
@@ -66,7 +67,12 @@ export function MonthCalendar({
 
 	const { from, to } = monthRange(visibleMonth)
 
-	const { data: events = [], isLoading } = useQuery({
+	const {
+		data: events = [],
+		isLoading,
+		isError,
+		refetch,
+	} = useQuery({
 		queryKey: queryKeys.dashboard.calendarMonth(from, to),
 		queryFn: async () => {
 			const supabase = getBrowserSupabase()
@@ -127,6 +133,12 @@ export function MonthCalendar({
 
 			{isLoading ? (
 				<SectionSkeleton rows={6} />
+			) : isError ? (
+				<ErrorState
+					title="Kunde inte ladda kalender"
+					description="Kontrollera anslutningen och försök igen."
+					onRetry={() => void refetch()}
+				/>
 			) : (
 				<Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
 					<PopoverAnchor asChild>
@@ -143,7 +155,7 @@ export function MonthCalendar({
 									setPopoverDay(date)
 									setPopoverOpen(true)
 								}}
-								className="w-full bg-transparent p-0 [--cell-size:1.75rem] sm:[--cell-size:2rem]"
+								className="w-full bg-transparent p-0 [--cell-size:1.5rem] sm:[--cell-size:1.75rem] md:[--cell-size:2rem]"
 								classNames={{
 									root: 'w-full',
 									months: 'relative w-full',
@@ -154,7 +166,7 @@ export function MonthCalendar({
 									weekday:
 										'pb-2 text-center text-[0.8rem] font-normal text-muted-foreground',
 									week: 'border-0',
-									day: 'h-24 p-px text-left align-top sm:h-28',
+									day: 'h-20 p-px text-left align-top sm:h-24 md:h-28',
 									today: 'font-semibold',
 								}}
 								components={{
@@ -170,7 +182,7 @@ export function MonthCalendar({
 					</PopoverAnchor>
 
 					<PopoverContent
-						className="w-80 p-0"
+						className="w-[min(20rem,calc(100vw-2rem))] p-0"
 						align="center"
 						onOpenAutoFocus={(event) => event.preventDefault()}
 						onPointerDownOutside={(event) => {

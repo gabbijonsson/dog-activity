@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Dog Sports Tracker">
+  <rect width="32" height="32" rx="8" fill="#006de5"/>
+  <ellipse cx="16" cy="21" rx="5.5" ry="4.5" fill="#f7fbff"/>
+  <circle cx="10" cy="13" r="2.6" fill="#f7fbff"/>
+  <circle cx="16" cy="10.5" r="2.6" fill="#f7fbff"/>
+  <circle cx="22" cy="13" r="2.6" fill="#f7fbff"/>
+  <circle cx="12.5" cy="17" r="2.1" fill="#14d9ff"/>
+  <circle cx="19.5" cy="17" r="2.1" fill="#14d9ff"/>
+</svg>

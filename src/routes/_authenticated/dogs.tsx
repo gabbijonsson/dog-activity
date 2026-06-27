@@ -7,7 +7,12 @@ import { DogFormDrawer } from '#/components/dogs/dog-form-drawer.tsx'
 import { DogsTable } from '#/components/dogs/dogs-table.tsx'
 import { Button } from '#/components/ui/button.tsx'
 
+import { pageTitle } from '#/lib/page-meta.ts'
+
 export const Route = createFileRoute('/_authenticated/dogs')({
+	head: () => ({
+		meta: [{ title: pageTitle('Hundar') }],
+	}),
 	component: DogsPage,
 })
 

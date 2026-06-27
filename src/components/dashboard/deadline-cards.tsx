@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { CalendarClock, Flag, Timer } from 'lucide-react'
 import {
 	EmptyState,
+	ErrorState,
 	SectionSkeleton,
 } from '#/components/dashboard/dashboard-primitives.tsx'
 import {
@@ -29,7 +30,7 @@ interface DeadlineCardsProps {
 const DEADLINE_SKELETON_IDS = ['opening', 'closing', 'competitions'] as const
 
 export function DeadlineCards({ onCompetitionSelect }: DeadlineCardsProps) {
-	const { data, isLoading, isError } = useQuery({
+	const { data, isLoading, isError, refetch } = useQuery({
 		queryKey: queryKeys.dashboard.summary(),
 		queryFn: async () => {
 			const supabase = getBrowserSupabase()
@@ -56,9 +57,10 @@ export function DeadlineCards({ onCompetitionSelect }: DeadlineCardsProps) {
 
 	if (isError || !data) {
 		return (
-			<EmptyState
+			<ErrorState
 				title="Kunde inte ladda deadlines"
-				description="Uppdatera sidan för att försöka igen."
+				description="Kontrollera anslutningen och försök igen."
+				onRetry={() => void refetch()}
 			/>
 		)
 	}

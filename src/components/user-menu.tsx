@@ -36,7 +36,9 @@ export function UserMenu() {
 	if (!isAuthenticated || !user) {
 		return (
 			<Button variant="outline" size="sm" asChild>
-				<Link to="/login">Login</Link>
+				<Link to="/login" search={{ redirect: '/' }}>
+					Logga in
+				</Link>
 			</Button>
 		)
 	}
@@ -51,7 +53,7 @@ export function UserMenu() {
 					variant="ghost"
 					size="icon"
 					className="rounded-full"
-					aria-label="Open user menu"
+					aria-label="Öppna användarmenyn"
 				>
 					<Avatar size="sm">
 						<AvatarFallback>
@@ -74,8 +76,8 @@ export function UserMenu() {
 						void signOut()
 					}}
 				>
-					<LogOutIcon />
-					Log out
+					<LogOutIcon aria-hidden="true" />
+					Logga ut
 				</DropdownMenuItem>
 			</DropdownMenuContent>
 		</DropdownMenu>

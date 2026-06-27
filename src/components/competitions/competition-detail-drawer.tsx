@@ -5,7 +5,10 @@ import { toast } from 'sonner'
 
 import { CompetitionEntriesSection } from '#/components/competitions/competition-entries-section.tsx'
 import { CompetitionStatusBadge } from '#/components/competitions/competition-status-badge.tsx'
-import { SectionSkeleton } from '#/components/dashboard/dashboard-primitives.tsx'
+import {
+	ErrorState,
+	SectionSkeleton,
+} from '#/components/dashboard/dashboard-primitives.tsx'
 import { CompetitionLocationSection } from '#/components/map/competition-map.tsx'
 import {
 	AlertDialog,
@@ -63,7 +66,12 @@ export function CompetitionDetailDrawer({
 	const queryClient = useQueryClient()
 	const [deleteOpen, setDeleteOpen] = useState(false)
 
-	const { data: competition, isLoading } = useQuery({
+	const {
+		data: competition,
+		isLoading,
+		isError,
+		refetch,
+	} = useQuery({
 		queryKey: queryKeys.competitions.detail(competitionId ?? 'none'),
 		queryFn: async () => {
 			if (!competitionId) return null
@@ -124,6 +132,14 @@ export function CompetitionDetailDrawer({
 					{isLoading ? (
 						<SheetBody>
 							<SectionSkeleton rows={6} />
+						</SheetBody>
+					) : isError ? (
+						<SheetBody>
+							<ErrorState
+								title="Kunde inte ladda tävling"
+								description="Kontrollera anslutningen och försök igen."
+								onRetry={() => void refetch()}
+							/>
 						</SheetBody>
 					) : competition ? (
 						<SheetBody className="space-y-6">

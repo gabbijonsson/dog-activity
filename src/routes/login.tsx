@@ -15,9 +15,13 @@ import {
 import { Input } from '#/components/ui/input.tsx'
 import { Label } from '#/components/ui/label.tsx'
 import { getAuthSession, sanitizeRedirect } from '#/lib/auth.ts'
+import { pageTitle } from '#/lib/page-meta.ts'
 import { loginSchema } from '#/lib/schemas.ts'
 
 export const Route = createFileRoute('/login')({
+	head: () => ({
+		meta: [{ title: pageTitle('Logga in') }],
+	}),
 	validateSearch: (search: Record<string, unknown>) => ({
 		redirect: sanitizeRedirect(search.redirect),
 	}),
@@ -46,9 +50,10 @@ function LoginPage() {
 		onSubmit: async ({ value }) => {
 			try {
 				await signIn(value.email, value.password)
-				await navigate({ to: redirectTo })
+				toast.success('Inloggad')
+				await navigate({ to: redirectTo, search: { redirect: redirectTo } })
 			} catch {
-				toast.error('Invalid email or password')
+				toast.error('Fel e-post eller lösenord')
 			}
 		},
 	})
@@ -56,9 +61,9 @@ function LoginPage() {
 	return (
 		<Card className="island-shell w-full max-w-md border-0">
 			<CardHeader>
-				<CardTitle className="display-title">Sign in</CardTitle>
+				<CardTitle className="display-title">Logga in</CardTitle>
 				<CardDescription>
-					Email and password for your Dog Sports Tracker account.
+					E-post och lösenord till ditt Dog Sports Tracker-konto.
 				</CardDescription>
 			</CardHeader>
 			<form
@@ -124,7 +129,7 @@ function LoginPage() {
 								className="w-full"
 								disabled={!canSubmit || isSubmitting}
 							>
-								{isSubmitting ? 'Signing in…' : 'Sign in'}
+								{isSubmitting ? 'Loggar in…' : 'Logga in'}
 							</Button>
 						)}
 					</form.Subscribe>
