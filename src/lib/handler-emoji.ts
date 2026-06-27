@@ -8,9 +8,7 @@ type EntryWithHandler = {
 }
 
 /** Unique handler emojis for a competition's entries, in entry order. */
-export function competitionHandlerEmojis(
-	entries: EntryWithHandler[],
-): string {
+export function competitionHandlerEmojis(entries: EntryWithHandler[]): string {
 	const seenHandlerIds = new Set<string>()
 	const emojis: string[] = []
 

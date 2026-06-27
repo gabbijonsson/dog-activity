@@ -29,12 +29,16 @@ type ProfileHandlerFields = Pick<
 >
 
 export type CalendarEventWithCompetition = CalendarEvent & {
-	competitions: (Pick<Competition, 'id' | 'name' | 'sport' | 'location'> & {
-		nosework_details: { type: Database['public']['Enums']['nosework_type'] } | null
-		entries: Array<{
-			handler: ProfileHandlerFields | null
-		}>
-	}) | null
+	competitions:
+		| (Pick<Competition, 'id' | 'name' | 'sport' | 'location'> & {
+				nosework_details: {
+					type: Database['public']['Enums']['nosework_type']
+				} | null
+				entries: Array<{
+					handler: ProfileHandlerFields | null
+				}>
+		  })
+		| null
 }
 
 export type DashboardSummary = {
@@ -86,9 +90,7 @@ export async function fetchDashboardSummary(
 				.limit(5),
 			supabase
 				.from('calendar_events')
-				.select(
-					`*, competitions(${calendarEventCompetitionSelect})`,
-				)
+				.select(`*, competitions(${calendarEventCompetitionSelect})`)
 				.gte('event_date', now)
 				.order('event_date', { ascending: true })
 				.limit(20),

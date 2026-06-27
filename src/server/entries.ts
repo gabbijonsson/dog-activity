@@ -17,7 +17,9 @@ export class EntryError extends Error {
 	}
 }
 
-async function requireAuthUser(supabase: ReturnType<typeof createServerSupabase>) {
+async function requireAuthUser(
+	supabase: ReturnType<typeof createServerSupabase>,
+) {
 	const {
 		data: { user },
 		error,

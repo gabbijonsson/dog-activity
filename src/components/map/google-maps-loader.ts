@@ -1,5 +1,3 @@
-import { getGoogleMapsBrowserKey } from '#/lib/env.ts'
-
 const GOOGLE_MAPS_SCRIPT_ID = 'google-maps-js'
 
 let loadPromise: Promise<void> | null = null
@@ -129,9 +127,14 @@ export async function createCompetitionMap(
 	lng: number,
 	title?: string,
 ) {
-	const { Map: GoogleMap } = await (window.google?.maps?.importLibrary(
+	const importLibrary = window.google?.maps?.importLibrary
+	if (!importLibrary) {
+		throw new Error('Google Maps importLibrary unavailable')
+	}
+
+	const { Map: GoogleMap } = (await importLibrary(
 		'maps',
-	) as Promise<google.maps.MapsLibrary>)
+	)) as google.maps.MapsLibrary
 
 	const map = new GoogleMap(container, {
 		center: { lat, lng },

@@ -10,10 +10,7 @@ import {
 } from '#/components/ui/select.tsx'
 import type { Database } from '#/lib/database.types.ts'
 import { ENTRY_STATUS_OPTIONS } from '#/lib/entries.ts'
-import {
-	getAvailableDogs,
-	getAvailableHandlers,
-} from '#/lib/entry-options.ts'
+import { getAvailableDogs, getAvailableHandlers } from '#/lib/entry-options.ts'
 import type { ProfileListItem } from '#/lib/profile-queries.ts'
 import { profileDisplayName } from '#/lib/profile-queries.ts'
 
@@ -125,10 +122,7 @@ export function EntryRegistrationFields({
 						onValueChange={onHandlerIdChange}
 						disabled={disabled || availableHandlers.length === 0}
 					>
-						<SelectTrigger
-							id={handlerFieldId}
-							className="w-full bg-background"
-						>
+						<SelectTrigger id={handlerFieldId} className="w-full bg-background">
 							<SelectValue placeholder="Välj handler" />
 						</SelectTrigger>
 						<SelectContent>

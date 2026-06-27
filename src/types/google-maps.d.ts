@@ -1,14 +1,8 @@
-declare global {
-	interface Window {
-		google?: typeof google
-	}
-}
-
 declare namespace google {
 	namespace maps {
-		function importLibrary(
-			library: 'places' | 'maps',
-		): Promise<PlacesLibrary | MapsLibrary>
+		var importLibrary:
+			| ((library: 'places' | 'maps') => Promise<PlacesLibrary | MapsLibrary>)
+			| undefined
 
 		namespace event {
 			function clearInstanceListeners(instance: unknown): void
@@ -73,7 +67,7 @@ declare namespace google {
 			stylers: Array<Record<string, string | number>>
 		}
 
-		const Marker: MarkerConstructor
+		var Marker: MarkerConstructor | undefined
 
 		namespace places {
 			interface AutocompleteOptions {
@@ -105,4 +99,10 @@ declare namespace google {
 	}
 }
 
-export {}
+declare global {
+	interface Window {
+		google?: {
+			maps: typeof google.maps
+		}
+	}
+}
