@@ -8,6 +8,7 @@ const STATUS_STYLES: Record<CompetitionStatus, string> = {
 		'bg-[color-mix(in_oklab,var(--signal)_16%,transparent)] text-[var(--signal-hot)]',
 	in_progress:
 		'bg-[color-mix(in_oklab,var(--lagoon)_16%,transparent)] text-[var(--lagoon-deep)]',
+	reserve_slot: 'bg-muted/70 text-muted-foreground',
 	registered:
 		'bg-[color-mix(in_oklab,var(--palm)_18%,transparent)] text-[var(--palm)]',
 }

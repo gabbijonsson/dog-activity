@@ -19,6 +19,8 @@ type EntryStatus = Database['public']['Enums']['entry_status']
 
 type DogOption = { id: string; name: string }
 
+const EMPTY_PARTICIPANT_VALUE = '__none__'
+
 interface EntryRegistrationFieldsProps {
 	sport: Sport
 	enteredDogIds: Set<string>
@@ -31,6 +33,7 @@ interface EntryRegistrationFieldsProps {
 	onDogIdChange: (id: string) => void
 	onHandlerIdChange: (id: string) => void
 	onStatusChange: (status: EntryStatus) => void
+	requireDogHandler?: boolean
 	disabled?: boolean
 	idPrefix?: string
 }
@@ -47,6 +50,7 @@ export function EntryRegistrationFields({
 	onDogIdChange,
 	onHandlerIdChange,
 	onStatusChange,
+	requireDogHandler = false,
 	disabled = false,
 	idPrefix = 'entry',
 }: EntryRegistrationFieldsProps) {
@@ -58,82 +62,88 @@ export function EntryRegistrationFields({
 	)
 
 	useEffect(() => {
+		if (!requireDogHandler) return
 		if (availableDogs.length === 1 && dogId !== availableDogs[0].id) {
 			onDogIdChange(availableDogs[0].id)
 		}
-	}, [availableDogs, dogId, onDogIdChange])
+	}, [availableDogs, dogId, onDogIdChange, requireDogHandler])
 
 	useEffect(() => {
+		if (!requireDogHandler) return
 		if (
 			availableHandlers.length === 1 &&
 			handlerId !== availableHandlers[0].id
 		) {
 			onHandlerIdChange(availableHandlers[0].id)
 		}
-	}, [availableHandlers, handlerId, onHandlerIdChange])
+	}, [availableHandlers, handlerId, onHandlerIdChange, requireDogHandler])
 
 	const dogFieldId = `${idPrefix}-dog`
 	const handlerFieldId = `${idPrefix}-handler`
 	const statusFieldId = `${idPrefix}-status`
+	const dogSelectValue = dogId || EMPTY_PARTICIPANT_VALUE
+	const handlerSelectValue = handlerId || EMPTY_PARTICIPANT_VALUE
 
 	return (
 		<>
 			<div className="space-y-1.5">
-				<Label htmlFor={dogFieldId}>Hund</Label>
-				{availableDogs.length === 1 ? (
-					<p
-						id={dogFieldId}
-						className="rounded-md border border-border/70 bg-muted/30 px-3 py-2 text-sm"
-					>
-						{availableDogs[0].name}
-					</p>
-				) : (
-					<Select
-						value={dogId}
-						onValueChange={onDogIdChange}
-						disabled={disabled || availableDogs.length === 0}
-					>
-						<SelectTrigger id={dogFieldId} className="w-full bg-background">
-							<SelectValue placeholder="Välj hund" />
-						</SelectTrigger>
-						<SelectContent>
-							{availableDogs.map((dog) => (
-								<SelectItem key={dog.id} value={dog.id}>
-									{dog.name}
-								</SelectItem>
-							))}
-						</SelectContent>
-					</Select>
-				)}
+				<Label htmlFor={dogFieldId}>
+					Hund{requireDogHandler ? '' : ' (valfritt)'}
+				</Label>
+				<Select
+					value={dogSelectValue}
+					onValueChange={(value) =>
+						onDogIdChange(value === EMPTY_PARTICIPANT_VALUE ? '' : value)
+					}
+					disabled={disabled || availableDogs.length === 0}
+				>
+					<SelectTrigger id={dogFieldId} className="w-full bg-background">
+						<SelectValue placeholder="Välj hund" />
+					</SelectTrigger>
+					<SelectContent>
+						{!requireDogHandler ? (
+							<SelectItem value={EMPTY_PARTICIPANT_VALUE}>
+								Ingen hund än
+							</SelectItem>
+						) : null}
+						{availableDogs.map((dog) => (
+							<SelectItem key={dog.id} value={dog.id}>
+								{dog.name}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
 			</div>
 
 			<div className="space-y-1.5">
-				<Label htmlFor={handlerFieldId}>Hundförare</Label>
-				{availableHandlers.length === 1 ? (
-					<p
-						id={handlerFieldId}
-						className="rounded-md border border-border/70 bg-muted/30 px-3 py-2 text-sm"
-					>
-						{profileDisplayName(availableHandlers[0])}
-					</p>
-				) : (
-					<Select
-						value={handlerId}
-						onValueChange={onHandlerIdChange}
-						disabled={disabled || availableHandlers.length === 0}
-					>
-						<SelectTrigger id={handlerFieldId} className="w-full bg-background">
-							<SelectValue placeholder="Välj handler" />
-						</SelectTrigger>
-						<SelectContent>
-							{availableHandlers.map((handler) => (
-								<SelectItem key={handler.id} value={handler.id}>
-									{profileDisplayName(handler)}
-								</SelectItem>
-							))}
-						</SelectContent>
-					</Select>
-				)}
+				<Label htmlFor={handlerFieldId}>
+					Hundförare{requireDogHandler ? '' : ' (valfritt)'}
+				</Label>
+				<Select
+					value={handlerSelectValue}
+					onValueChange={(value) =>
+						onHandlerIdChange(
+							value === EMPTY_PARTICIPANT_VALUE ? '' : value,
+						)
+					}
+					disabled={disabled || availableHandlers.length === 0}
+				>
+					<SelectTrigger id={handlerFieldId} className="w-full bg-background">
+						<SelectValue placeholder="Välj hundförare" />
+					</SelectTrigger>
+					<SelectContent>
+						{!requireDogHandler ? (
+							<SelectItem value={EMPTY_PARTICIPANT_VALUE}>
+								Ingen hundförare än
+							</SelectItem>
+						) : null}
+						{availableHandlers.map((handler) => (
+							<SelectItem key={handler.id} value={handler.id}>
+								{profileDisplayName(handler)}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
 			</div>
 
 			<div className="space-y-1.5">

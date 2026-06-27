@@ -38,6 +38,11 @@ import {
 } from '#/components/ui/table.tsx'
 import { activateOnKeyboard } from '#/lib/a11y.ts'
 import {
+	COMPETITION_STATUS_OPTIONS,
+	COMPETITION_TYPE_FILTER_OPTIONS,
+	competitionTypeLabel,
+} from '#/lib/competition-labels.ts'
+import {
 	type CompetitionListItem,
 	fetchCompetitionsList,
 } from '#/lib/competition-queries.ts'
@@ -104,6 +109,22 @@ export function CompetitionsTable({
 				filterFn: 'equals',
 			},
 			{
+				id: 'type',
+				accessorFn: (row) => {
+					if (row.sport === 'nosework') {
+						return row.nosework_details?.type ?? ''
+					}
+					return row.rally_details?.number_of_starts ?? ''
+				},
+				header: ({ column }) => <SortHeader column={column} label="Typ" />,
+				cell: ({ row }) =>
+					competitionTypeLabel(row.original.sport, {
+						noseworkType: row.original.nosework_details?.type,
+						rallyStarts: row.original.rally_details?.number_of_starts,
+					}),
+				filterFn: 'equals',
+			},
+			{
 				accessorKey: 'event_date',
 				header: ({ column }) => (
 					<SortHeader column={column} label="Tävlingsdag" />
@@ -122,6 +143,7 @@ export function CompetitionsTable({
 				cell: ({ row }) => (
 					<CompetitionStatusBadge status={row.original.status} />
 				),
+				filterFn: 'equals',
 			},
 			{
 				id: 'actions',
@@ -174,7 +196,16 @@ export function CompetitionsTable({
 
 	const sportFilter =
 		(table.getColumn('sport')?.getFilterValue() as string | undefined) ?? 'all'
+	const typeFilter =
+		(table.getColumn('type')?.getFilterValue() as string | undefined) ?? 'all'
+	const statusFilter =
+		(table.getColumn('status')?.getFilterValue() as string | undefined) ??
+		'all'
 	const filteredRows = table.getRowModel().rows
+
+	function setColumnFilter(columnId: string, value: string) {
+		table.getColumn(columnId)?.setFilterValue(value === 'all' ? undefined : value)
+	}
 
 	if (isLoading) {
 		return <SectionSkeleton rows={5} />
@@ -201,7 +232,7 @@ export function CompetitionsTable({
 
 	return (
 		<div className="space-y-4">
-			<div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+			<div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
 				<Input
 					placeholder="Sök på namn eller plats…"
 					value={globalFilter}
@@ -210,11 +241,7 @@ export function CompetitionsTable({
 				/>
 				<Select
 					value={sportFilter}
-					onValueChange={(value) =>
-						table
-							.getColumn('sport')
-							?.setFilterValue(value === 'all' ? undefined : value)
-					}
+					onValueChange={(value) => setColumnFilter('sport', value)}
 				>
 					<SelectTrigger className="w-full max-w-[180px] bg-background">
 						<SelectValue placeholder="Alla sporter" />
@@ -225,13 +252,45 @@ export function CompetitionsTable({
 						<SelectItem value="rally_obedience">Rally</SelectItem>
 					</SelectContent>
 				</Select>
+				<Select
+					value={typeFilter}
+					onValueChange={(value) => setColumnFilter('type', value)}
+				>
+					<SelectTrigger className="w-full max-w-[200px] bg-background">
+						<SelectValue placeholder="Alla typer" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="all">Alla typer</SelectItem>
+						{COMPETITION_TYPE_FILTER_OPTIONS.map((option) => (
+							<SelectItem key={option.value} value={option.value}>
+								{option.label}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
+				<Select
+					value={statusFilter}
+					onValueChange={(value) => setColumnFilter('status', value)}
+				>
+					<SelectTrigger className="w-full max-w-[200px] bg-background">
+						<SelectValue placeholder="Alla statusar" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="all">Alla statusar</SelectItem>
+						{COMPETITION_STATUS_OPTIONS.map((option) => (
+							<SelectItem key={option.value} value={option.value}>
+								{option.label}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
 			</div>
 
 			<div className="md:hidden">
 				{filteredRows.length === 0 ? (
 					<EmptyState
 						title="Inga tävlingar matchar filtret"
-						description="Prova ett annat sökord eller sportfilter."
+						description="Prova ett annat sökord eller filter."
 					/>
 				) : (
 					<ul className="space-y-3">
@@ -262,6 +321,11 @@ export function CompetitionsTable({
 										</p>
 										<p className="mt-1 text-xs text-muted-foreground">
 											{sportLabel(competition.sport)}
+											{' · '}
+											{competitionTypeLabel(competition.sport, {
+												noseworkType: competition.nosework_details?.type,
+												rallyStarts: competition.rally_details?.number_of_starts,
+											})}
 										</p>
 										{competition.location ? (
 											<p className="mt-2 flex items-start gap-1.5 text-xs text-muted-foreground">

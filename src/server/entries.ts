@@ -1,14 +1,22 @@
 import { createServerFn } from '@tanstack/react-start'
 
 import type { Database } from '#/lib/database.types.ts'
+import { entryRequiresDogHandler } from '#/lib/entry-validation.ts'
 import {
 	entryCreateSchema,
 	entryDeleteSchema,
+	entryUpdateSchema,
 	entryUpdateStatusSchema,
 } from '#/lib/schemas.ts'
 import { createServerSupabase } from '#/lib/supabase.server.ts'
 
 type Sport = Database['public']['Enums']['sport']
+type EntryStatus = Database['public']['Enums']['entry_status']
+
+type EntryRow = Pick<
+	Database['public']['Tables']['entries']['Row'],
+	'id' | 'competition_id' | 'dog_id' | 'handler_id' | 'status' | 'sport'
+>
 
 export class EntryError extends Error {
 	constructor(message: string) {
@@ -48,33 +56,86 @@ async function fetchCompetitionSport(
 	return data.sport
 }
 
+async function fetchEntry(
+	supabase: ReturnType<typeof createServerSupabase>,
+	id: string,
+): Promise<EntryRow> {
+	const { data, error } = await supabase
+		.from('entries')
+		.select('id, competition_id, dog_id, handler_id, status, sport')
+		.eq('id', id)
+		.maybeSingle()
+
+	if (error) throw new EntryError(error.message)
+	if (!data) throw new EntryError('Anmälan hittades inte')
+
+	return data
+}
+
+function normalizeParticipantId(value: string): string | null {
+	const trimmed = value.trim()
+	return trimmed.length > 0 ? trimmed : null
+}
+
+function assertParticipantsForStatus(
+	status: EntryStatus,
+	dogId: string | null,
+	handlerId: string | null,
+) {
+	if (!entryRequiresDogHandler(status)) return
+
+	if (!dogId) {
+		throw new EntryError('Välj hund innan du sätter status Anmäld eller senare')
+	}
+
+	if (!handlerId) {
+		throw new EntryError(
+			'Välj hundförare innan du sätter status Anmäld eller senare',
+		)
+	}
+}
+
 async function validateEntryConstraints(
 	supabase: ReturnType<typeof createServerSupabase>,
 	competitionId: string,
-	dogId: string,
-	handlerId: string,
+	dogId: string | null,
+	handlerId: string | null,
 	sport: Sport,
+	excludeEntryId?: string,
 ) {
-	const { data: existingDog, error: dogError } = await supabase
-		.from('entries')
-		.select('id')
-		.eq('competition_id', competitionId)
-		.eq('dog_id', dogId)
-		.maybeSingle()
+	if (dogId) {
+		let query = supabase
+			.from('entries')
+			.select('id')
+			.eq('competition_id', competitionId)
+			.eq('dog_id', dogId)
 
-	if (dogError) throw new EntryError(dogError.message)
-	if (existingDog) {
-		throw new EntryError('Hunden är redan anmäld till denna tävling')
+		if (excludeEntryId) {
+			query = query.neq('id', excludeEntryId)
+		}
+
+		const { data: existingDog, error: dogError } = await query.maybeSingle()
+
+		if (dogError) throw new EntryError(dogError.message)
+		if (existingDog) {
+			throw new EntryError('Hunden är redan anmäld till denna tävling')
+		}
 	}
 
-	if (sport !== 'nosework') return
+	if (sport !== 'nosework' || !handlerId) return
 
-	const { data: existingHandler, error: handlerError } = await supabase
+	let handlerQuery = supabase
 		.from('entries')
 		.select('id')
 		.eq('competition_id', competitionId)
 		.eq('handler_id', handlerId)
-		.maybeSingle()
+
+	if (excludeEntryId) {
+		handlerQuery = handlerQuery.neq('id', excludeEntryId)
+	}
+
+	const { data: existingHandler, error: handlerError } =
+		await handlerQuery.maybeSingle()
 
 	if (handlerError) throw new EntryError(handlerError.message)
 	if (existingHandler) {
@@ -100,11 +161,15 @@ export const createEntry = createServerFn({ method: 'POST' })
 		await requireAuthUser(supabase)
 
 		const sport = await fetchCompetitionSport(supabase, data.competition_id)
+		const dogId = normalizeParticipantId(data.dog_id)
+		const handlerId = normalizeParticipantId(data.handler_id)
+
+		assertParticipantsForStatus(data.status, dogId, handlerId)
 		await validateEntryConstraints(
 			supabase,
 			data.competition_id,
-			data.dog_id,
-			data.handler_id,
+			dogId,
+			handlerId,
 			sport,
 		)
 
@@ -112,8 +177,8 @@ export const createEntry = createServerFn({ method: 'POST' })
 			.from('entries')
 			.insert({
 				competition_id: data.competition_id,
-				dog_id: data.dog_id,
-				handler_id: data.handler_id,
+				dog_id: dogId,
+				handler_id: handlerId,
 				status: data.status,
 				sport,
 			})
@@ -124,11 +189,58 @@ export const createEntry = createServerFn({ method: 'POST' })
 		return { id: created.id }
 	})
 
+export const updateEntry = createServerFn({ method: 'POST' })
+	.validator(entryUpdateSchema)
+	.handler(async ({ data }) => {
+		const supabase = createServerSupabase()
+		await requireAuthUser(supabase)
+
+		const existing = await fetchEntry(supabase, data.id)
+		const dogId =
+			data.dog_id !== undefined
+				? normalizeParticipantId(data.dog_id)
+				: existing.dog_id
+		const handlerId =
+			data.handler_id !== undefined
+				? normalizeParticipantId(data.handler_id)
+				: existing.handler_id
+		const status = data.status ?? existing.status
+
+		assertParticipantsForStatus(status, dogId, handlerId)
+		await validateEntryConstraints(
+			supabase,
+			existing.competition_id,
+			dogId,
+			handlerId,
+			existing.sport,
+			existing.id,
+		)
+
+		const { error } = await supabase
+			.from('entries')
+			.update({
+				dog_id: dogId,
+				handler_id: handlerId,
+				status,
+			})
+			.eq('id', existing.id)
+
+		if (error) mapInsertError(error)
+		return { id: existing.id }
+	})
+
 export const updateEntryStatus = createServerFn({ method: 'POST' })
 	.validator(entryUpdateStatusSchema)
 	.handler(async ({ data }) => {
 		const supabase = createServerSupabase()
 		await requireAuthUser(supabase)
+
+		const existing = await fetchEntry(supabase, data.id)
+		assertParticipantsForStatus(
+			data.status,
+			existing.dog_id,
+			existing.handler_id,
+		)
 
 		const { error } = await supabase
 			.from('entries')

@@ -17,7 +17,7 @@ export type CalendarEvent =
 
 export type CompetitionEntry = Pick<
 	Database['public']['Tables']['entries']['Row'],
-	'id' | 'status'
+	'id' | 'status' | 'dog_id' | 'handler_id'
 > & {
 	dog: Pick<Database['public']['Tables']['dogs']['Row'], 'id' | 'name'> | null
 	handler: Pick<
@@ -36,6 +36,18 @@ export type CompetitionDetail = Competition & {
 }
 
 export type CompetitionListItem = Competition & {
+	nosework_details:
+		| Pick<
+				Database['public']['Tables']['nosework_details']['Row'],
+				'type'
+		  >
+		| null
+	rally_details:
+		| Pick<
+				Database['public']['Tables']['rally_details']['Row'],
+				'number_of_starts'
+		  >
+		| null
 	entries: Pick<
 		Database['public']['Tables']['entries']['Row'],
 		'id' | 'status'
@@ -124,17 +136,17 @@ export async function fetchCompetitionsList(
 ): Promise<CompetitionListItem[]> {
 	const { data, error } = await supabase
 		.from('competitions')
-		.select('*, entries(id, status)')
+		.select(
+			'*, nosework_details(type), rally_details(number_of_starts), entries(id, status)',
+		)
 		.order('event_date', { ascending: true })
 
 	if (error) throw error
 
-	return (data as Array<Competition & { entries: CompetitionEntry[] }>).map(
-		(competition) => ({
-			...competition,
-			status: deriveCompetitionStatus(competition.entries),
-		}),
-	)
+	return data.map((competition) => ({
+		...competition,
+		status: deriveCompetitionStatus(competition.entries),
+	}))
 }
 
 export async function fetchCompetitionById(
@@ -144,7 +156,7 @@ export async function fetchCompetitionById(
 	const { data, error } = await supabase
 		.from('competitions')
 		.select(
-			'*, nosework_details(*), rally_details(*), entries(id, status, dog:dogs(id, name), handler:profiles(id, full_name, email)), calendar_events(*)',
+			'*, nosework_details(*), rally_details(*), entries(id, status, dog_id, handler_id, dog:dogs(id, name), handler:profiles(id, full_name, email)), calendar_events(*)',
 		)
 		.eq('id', id)
 		.maybeSingle()

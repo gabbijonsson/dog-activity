@@ -6,7 +6,6 @@ import { toast } from 'sonner'
 
 import { useAuth } from '#/components/auth-provider.tsx'
 import { EntryRegistrationFields } from '#/components/competitions/entry-registration-fields.tsx'
-import { EmptyState } from '#/components/dashboard/dashboard-primitives.tsx'
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -18,22 +17,15 @@ import {
 	AlertDialogTitle,
 } from '#/components/ui/alert-dialog.tsx'
 import { Button } from '#/components/ui/button.tsx'
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from '#/components/ui/select.tsx'
 import type { CompetitionEntry } from '#/lib/competition-queries.ts'
 import type { Database } from '#/lib/database.types.ts'
 import { fetchDogsList } from '#/lib/dog-queries.ts'
-import { ENTRY_STATUS_OPTIONS, entryStatusLabel } from '#/lib/entries.ts'
 import {
-	canAddEntry,
+	canAssignCompetition,
 	getAvailableDogs,
 	getAvailableHandlers,
 } from '#/lib/entry-options.ts'
+import { entryRequiresDogHandler } from '#/lib/entry-validation.ts'
 import { fetchProfilesList } from '#/lib/profile-queries.ts'
 import { queryKeys } from '#/lib/queryKeys.ts'
 import { type EntryCreateInput, entryCreateSchema } from '#/lib/schemas.ts'
@@ -43,7 +35,7 @@ import {
 	createEntry,
 	deleteEntry,
 	EntryError,
-	updateEntryStatus,
+	updateEntry,
 } from '#/server/entries.ts'
 
 type Sport = Database['public']['Enums']['sport']
@@ -82,6 +74,30 @@ function invalidateEntryQueries(
 	void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
 }
 
+function enteredDogIdsForEntry(
+	entries: CompetitionEntry[],
+	currentEntryId: string,
+): Set<string> {
+	return new Set(
+		entries.flatMap((entry) =>
+			entry.id !== currentEntryId && entry.dog_id ? [entry.dog_id] : [],
+		),
+	)
+}
+
+function enteredHandlerIdsForEntry(
+	entries: CompetitionEntry[],
+	currentEntryId: string,
+): Set<string> {
+	return new Set(
+		entries.flatMap((entry) =>
+			entry.id !== currentEntryId && entry.handler_id
+				? [entry.handler_id]
+				: [],
+		),
+	)
+}
+
 export function CompetitionEntriesSection({
 	competitionId,
 	sport,
@@ -108,10 +124,10 @@ export function CompetitionEntriesSection({
 	})
 
 	const enteredDogIds = new Set(
-		entries.flatMap((entry) => (entry.dog?.id ? [entry.dog.id] : [])),
+		entries.flatMap((entry) => (entry.dog_id ? [entry.dog_id] : [])),
 	)
 	const enteredHandlerIds = new Set(
-		entries.flatMap((entry) => (entry.handler?.id ? [entry.handler.id] : [])),
+		entries.flatMap((entry) => (entry.handler_id ? [entry.handler_id] : [])),
 	)
 
 	const availableDogs = getAvailableDogs(dogs, enteredDogIds)
@@ -120,36 +136,44 @@ export function CompetitionEntriesSection({
 		enteredHandlerIds,
 		sport,
 	)
-	const showAddForm = canAddEntry(sport, availableDogs, availableHandlers)
+	const showAssignForm = canAssignCompetition(
+		sport,
+		availableDogs,
+		availableHandlers,
+	)
+	const showEntriesList = entries.length > 0
 
 	const createMutation = useMutation({
 		mutationFn: async (values: EntryCreateInput) =>
 			createEntry({ data: values }),
 		onSuccess: () => {
 			invalidateEntryQueries(queryClient, competitionId)
-			toast.success('Anmälan tillagd')
+			toast.success('Tilldelning sparad')
 		},
 		onError: (error) => {
 			toast.error(
 				error instanceof EntryError
 					? error.message
-					: 'Kunde inte lägga till anmälan',
+					: 'Kunde inte tilldela tävlingen',
 			)
 		},
 	})
 
-	const statusMutation = useMutation({
-		mutationFn: async ({ id, status }: { id: string; status: EntryStatus }) =>
-			updateEntryStatus({ data: { id, status } }),
+	const updateMutation = useMutation({
+		mutationFn: async (values: {
+			id: string
+			dog_id?: string
+			handler_id?: string
+			status?: EntryStatus
+		}) => updateEntry({ data: values }),
 		onSuccess: () => {
 			invalidateEntryQueries(queryClient, competitionId)
-			toast.success('Status uppdaterad')
 		},
 		onError: (error) => {
 			toast.error(
 				error instanceof EntryError
 					? error.message
-					: 'Kunde inte uppdatera status',
+					: 'Kunde inte uppdatera tilldelningen',
 			)
 		},
 	})
@@ -158,14 +182,14 @@ export function CompetitionEntriesSection({
 		mutationFn: async (id: string) => deleteEntry({ data: { id } }),
 		onSuccess: () => {
 			invalidateEntryQueries(queryClient, competitionId)
-			toast.success('Anmälan borttagen')
+			toast.success('Tilldelning borttagen')
 			setDeleteEntryId(null)
 		},
 		onError: (error) => {
 			toast.error(
 				error instanceof EntryError
 					? error.message
-					: 'Kunde inte ta bort anmälan',
+					: 'Kunde inte ta bort tilldelningen',
 			)
 		},
 	})
@@ -191,128 +215,143 @@ export function CompetitionEntriesSection({
 
 	const entryToDelete = entries.find((entry) => entry.id === deleteEntryId)
 
+	if (!showAssignForm && !showEntriesList) {
+		return null
+	}
+
 	return (
-		<section>
-			<h3 className="island-kicker mb-3">Anmälningar</h3>
-
-			{showAddForm && (
-				<form
-					className="mb-4 space-y-3 rounded-lg border border-border/70 bg-muted/15 p-4"
-					onSubmit={(event) => {
-						event.preventDefault()
-						void form.handleSubmit()
-					}}
-				>
-					<p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-						Lägg till
-					</p>
-
-					<form.Field name="dog_id">
-						{(dogField) => (
-							<form.Field name="handler_id">
-								{(handlerField) => (
-									<form.Field name="status">
-										{(statusField) => (
-											<EntryRegistrationFields
-												sport={sport}
-												enteredDogIds={enteredDogIds}
-												enteredHandlerIds={enteredHandlerIds}
-												dogs={dogs}
-												handlers={handlers}
-												dogId={dogField.state.value}
-												handlerId={handlerField.state.value}
-												status={statusField.state.value}
-												onDogIdChange={dogField.handleChange}
-												onHandlerIdChange={handlerField.handleChange}
-												onStatusChange={statusField.handleChange}
-												disabled={createMutation.isPending}
-											/>
-										)}
-									</form.Field>
-								)}
-							</form.Field>
-						)}
-					</form.Field>
-
-					<Button
-						type="submit"
-						className="w-full"
-						disabled={createMutation.isPending}
+		<section className="space-y-6">
+			{showAssignForm && (
+				<div>
+					<h3 className="island-kicker mb-3">Tilldela tävling</h3>
+					<form
+						className="space-y-3 rounded-lg border border-border/70 bg-muted/15 p-4"
+						onSubmit={(event) => {
+							event.preventDefault()
+							void form.handleSubmit()
+						}}
 					>
-						<Plus className="size-4" aria-hidden="true" />
-						{createMutation.isPending ? 'Lägger till…' : 'Lägg till anmälan'}
-					</Button>
-				</form>
+						<form.Field name="dog_id">
+							{(dogField) => (
+								<form.Field name="handler_id">
+									{(handlerField) => (
+										<form.Field name="status">
+											{(statusField) => (
+												<EntryRegistrationFields
+													sport={sport}
+													enteredDogIds={enteredDogIds}
+													enteredHandlerIds={enteredHandlerIds}
+													dogs={dogs}
+													handlers={handlers}
+													dogId={dogField.state.value}
+													handlerId={handlerField.state.value}
+													status={statusField.state.value}
+													onDogIdChange={dogField.handleChange}
+													onHandlerIdChange={handlerField.handleChange}
+													onStatusChange={statusField.handleChange}
+													requireDogHandler={entryRequiresDogHandler(
+														statusField.state.value,
+													)}
+													disabled={createMutation.isPending}
+													idPrefix="assign-entry"
+												/>
+											)}
+										</form.Field>
+									)}
+								</form.Field>
+							)}
+						</form.Field>
+
+						<Button
+							type="submit"
+							className="w-full"
+							disabled={createMutation.isPending}
+						>
+							<Plus className="size-4" aria-hidden="true" />
+							{createMutation.isPending ? 'Sparar…' : 'Tilldela tävling'}
+						</Button>
+					</form>
+				</div>
 			)}
 
-			{entries.length === 0 ? (
-				<EmptyState
-					title="Inga anmälningar än"
-					description={
-						showAddForm
-							? 'Lägg till hund och handler ovan.'
-							: 'Alla hundar är redan anmälda.'
-					}
-				/>
-			) : (
-				<ul className="divide-y divide-border/60 rounded-lg border border-border/70">
-					{entries.map((entry) => (
-						<li
-							key={entry.id}
-							className={cn(
-								'flex items-start gap-3 border-l-[3px] px-4 py-3',
-								STATUS_ACCENT[entry.status],
-							)}
-						>
-							<div className="min-w-0 flex-1 space-y-1 text-sm">
-								<p className="font-medium">{entry.dog?.name ?? 'Okänd hund'}</p>
-								<p className="text-xs text-muted-foreground">
-									{entry.handler?.full_name ??
-										entry.handler?.email ??
-										'Okänd handler'}
-								</p>
-								<Select
-									value={entry.status}
-									onValueChange={(value) => {
-										if (value === entry.status) return
-										void statusMutation.mutateAsync({
-											id: entry.id,
-											status: value as EntryStatus,
-										})
-									}}
-									disabled={
-										statusMutation.isPending &&
-										statusMutation.variables?.id === entry.id
-									}
+			{showEntriesList && (
+				<div>
+					<h3 className="island-kicker mb-3">Deltagare</h3>
+					<ul className="divide-y divide-border/60 rounded-lg border border-border/70">
+						{entries.map((entry) => {
+							const isUpdating =
+								updateMutation.isPending &&
+								updateMutation.variables?.id === entry.id
+
+							return (
+								<li
+									key={entry.id}
+									className={cn(
+										'border-l-[3px] px-4 py-3',
+										STATUS_ACCENT[entry.status],
+									)}
 								>
-									<SelectTrigger
-										className="h-8 w-full max-w-44 border-border/60 bg-background/80 text-xs font-medium"
-										aria-label={`Status för ${entry.dog?.name ?? 'anmälan'}`}
-									>
-										<SelectValue>{entryStatusLabel(entry.status)}</SelectValue>
-									</SelectTrigger>
-									<SelectContent>
-										{ENTRY_STATUS_OPTIONS.map((option) => (
-											<SelectItem key={option.value} value={option.value}>
-												{option.label}
-											</SelectItem>
-										))}
-									</SelectContent>
-								</Select>
-							</div>
-							<Button
-								type="button"
-								variant="ghost"
-								size="icon-sm"
-								className="shrink-0 text-muted-foreground hover:text-destructive"
-								onClick={() => setDeleteEntryId(entry.id)}
-								aria-label={`Ta bort anmälan för ${entry.dog?.name ?? 'hund'}`}
-							>
-								<Trash2 className="size-4" aria-hidden="true" />
-							</Button>
-						</li>
-					))}
-				</ul>
+									<div className="flex items-start gap-3">
+										<div className="min-w-0 flex-1 space-y-3">
+											<EntryRegistrationFields
+												sport={sport}
+												enteredDogIds={enteredDogIdsForEntry(
+													entries,
+													entry.id,
+												)}
+												enteredHandlerIds={enteredHandlerIdsForEntry(
+													entries,
+													entry.id,
+												)}
+												dogs={dogs}
+												handlers={handlers}
+												dogId={entry.dog_id ?? ''}
+												handlerId={entry.handler_id ?? ''}
+												status={entry.status}
+												onDogIdChange={(dogId) => {
+													if (dogId === (entry.dog_id ?? '')) return
+													void updateMutation.mutateAsync({
+														id: entry.id,
+														dog_id: dogId,
+													})
+												}}
+												onHandlerIdChange={(handlerId) => {
+													if (handlerId === (entry.handler_id ?? '')) return
+													void updateMutation.mutateAsync({
+														id: entry.id,
+														handler_id: handlerId,
+													})
+												}}
+												onStatusChange={(status) => {
+													if (status === entry.status) return
+													void updateMutation.mutateAsync({
+														id: entry.id,
+														status,
+													})
+												}}
+												requireDogHandler={entryRequiresDogHandler(
+													entry.status,
+												)}
+												disabled={isUpdating}
+												idPrefix={`entry-${entry.id}`}
+											/>
+										</div>
+										<Button
+											type="button"
+											variant="ghost"
+											size="icon-sm"
+											className="shrink-0 text-muted-foreground hover:text-destructive"
+											onClick={() => setDeleteEntryId(entry.id)}
+											aria-label="Ta bort tilldelning"
+										>
+											<Trash2 className="size-4" aria-hidden="true" />
+										</Button>
+									</div>
+								</li>
+							)
+						})}
+					</ul>
+				</div>
 			)}
 
 			<AlertDialog
@@ -323,11 +362,11 @@ export function CompetitionEntriesSection({
 			>
 				<AlertDialogContent>
 					<AlertDialogHeader>
-						<AlertDialogTitle>Ta bort anmälan?</AlertDialogTitle>
+						<AlertDialogTitle>Ta bort tilldelning?</AlertDialogTitle>
 						<AlertDialogDescription>
-							{entryToDelete
-								? `Detta tar bort ${entryToDelete.dog?.name ?? 'hunden'} från tävlingen.`
-								: 'Detta tar bort anmälan från tävlingen.'}
+							{entryToDelete?.dog?.name
+								? `Detta tar bort ${entryToDelete.dog.name} från tävlingen.`
+								: 'Detta tar bort tilldelningen från tävlingen.'}
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>

@@ -1,5 +1,10 @@
 import { z } from 'zod'
 
+import {
+	entryRequiresDogHandler,
+	hasEntryParticipants,
+} from '#/lib/entry-validation.ts'
+
 /**
  * Shared Zod schemas for TanStack Form and server validation.
  */
@@ -109,6 +114,17 @@ export const competitionFormSchema = z
 				path: ['number_of_starts'],
 			})
 		}
+
+		if (
+			entryRequiresDogHandler(data.entry_status) &&
+			!hasEntryParticipants(data.entry_dog_id, data.entry_handler_id)
+		) {
+			ctx.addIssue({
+				code: 'custom',
+				message: 'Hund och hundförare krävs från status Anmäld',
+				path: ['entry_dog_id'],
+			})
+		}
 	})
 
 export type CompetitionFormInput = z.infer<typeof competitionFormSchema>
@@ -184,14 +200,48 @@ export const competitionSaveSchema = z
 
 export type CompetitionSaveInput = z.infer<typeof competitionSaveSchema>
 
-export const entryCreateSchema = z.object({
-	competition_id: z.uuid(),
-	dog_id: z.uuid({ error: 'Välj hund' }),
-	handler_id: z.uuid({ error: 'Välj handler' }),
-	status: entryStatusEnum,
-})
+function validateEntryParticipants(
+	data: { dog_id: string; handler_id: string; status: z.infer<typeof entryStatusEnum> },
+	ctx: z.RefinementCtx,
+) {
+	if (!entryRequiresDogHandler(data.status)) return
+
+	if (!data.dog_id.trim()) {
+		ctx.addIssue({
+			code: 'custom',
+			message: 'Välj hund',
+			path: ['dog_id'],
+		})
+	}
+
+	if (!data.handler_id.trim()) {
+		ctx.addIssue({
+			code: 'custom',
+			message: 'Välj hundförare',
+			path: ['handler_id'],
+		})
+	}
+}
+
+export const entryCreateSchema = z
+	.object({
+		competition_id: z.uuid(),
+		dog_id: z.string(),
+		handler_id: z.string(),
+		status: entryStatusEnum,
+	})
+	.superRefine(validateEntryParticipants)
 
 export type EntryCreateInput = z.infer<typeof entryCreateSchema>
+
+export const entryUpdateSchema = z.object({
+	id: z.uuid(),
+	dog_id: z.string().optional(),
+	handler_id: z.string().optional(),
+	status: entryStatusEnum.optional(),
+})
+
+export type EntryUpdateInput = z.infer<typeof entryUpdateSchema>
 
 export const entryUpdateStatusSchema = z.object({
 	id: z.uuid(),

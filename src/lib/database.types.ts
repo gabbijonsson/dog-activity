@@ -191,8 +191,8 @@ export type Database = {
 				Row: {
 					competition_id: string
 					created_at: string
-					dog_id: string
-					handler_id: string
+					dog_id: string | null
+					handler_id: string | null
 					id: string
 					sport: Database['public']['Enums']['sport']
 					status: Database['public']['Enums']['entry_status']
@@ -200,8 +200,8 @@ export type Database = {
 				Insert: {
 					competition_id: string
 					created_at?: string
-					dog_id: string
-					handler_id: string
+					dog_id?: string | null
+					handler_id?: string | null
 					id?: string
 					sport: Database['public']['Enums']['sport']
 					status?: Database['public']['Enums']['entry_status']
@@ -209,8 +209,8 @@ export type Database = {
 				Update: {
 					competition_id?: string
 					created_at?: string
-					dog_id?: string
-					handler_id?: string
+					dog_id?: string | null
+					handler_id?: string | null
 					id?: string
 					sport?: Database['public']['Enums']['sport']
 					status?: Database['public']['Enums']['entry_status']

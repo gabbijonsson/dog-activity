@@ -43,6 +43,10 @@ import {
 	formInputToSavePayload,
 } from '#/lib/competition-queries.ts'
 import { fetchDogsList } from '#/lib/dog-queries.ts'
+import {
+	entryRequiresDogHandler,
+	hasEntryParticipants,
+} from '#/lib/entry-validation.ts'
 import { fetchProfilesList } from '#/lib/profile-queries.ts'
 import { queryKeys } from '#/lib/queryKeys.ts'
 import {
@@ -136,10 +140,8 @@ export function CompetitionFormDrawer({
 
 			if (
 				!isEditing &&
-				entry_dog_id &&
-				entry_handler_id &&
-				entry_dog_id.length > 0 &&
-				entry_handler_id.length > 0
+				(hasEntryParticipants(entry_dog_id, entry_handler_id) ||
+					entryRequiresDogHandler(entry_status))
 			) {
 				await createEntry({
 					data: {
@@ -551,7 +553,7 @@ export function CompetitionFormDrawer({
 
 							{!isEditing && (
 								<div className="space-y-4 rounded-lg border border-border/70 bg-muted/20 p-4">
-									<p className="island-kicker">Anmälan</p>
+									<p className="island-kicker">Tilldela tävling</p>
 									<form.Subscribe selector={(state) => state.values.sport}>
 										{(sport) => (
 											<form.Field name="entry_dog_id">
@@ -574,6 +576,9 @@ export function CompetitionFormDrawer({
 																			handlerField.handleChange
 																		}
 																		onStatusChange={statusField.handleChange}
+																		requireDogHandler={entryRequiresDogHandler(
+																			statusField.state.value,
+																		)}
 																		disabled={mutation.isPending}
 																		idPrefix="create-entry"
 																	/>

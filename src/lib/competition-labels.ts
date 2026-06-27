@@ -12,6 +12,7 @@ export type CompetitionStatus =
 	| 'empty'
 	| 'interested'
 	| 'in_progress'
+	| 'reserve_slot'
 	| 'registered'
 
 const NOSEWORK_TYPE_LABELS: Record<NoseworkType, string> = {
@@ -46,6 +47,7 @@ const COMPETITION_STATUS_LABELS: Record<CompetitionStatus, string> = {
 	empty: 'Inga anmälningar',
 	interested: 'Intresserad',
 	in_progress: 'Pågår',
+	reserve_slot: 'Reserv',
 	registered: 'Anmäld',
 }
 
@@ -69,6 +71,24 @@ export function rallyStartsLabel(starts: RallyStarts): string {
 	return RALLY_STARTS_LABELS[starts]
 }
 
+export function competitionTypeLabel(
+	sport: Sport,
+	options: {
+		noseworkType?: NoseworkType | null
+		rallyStarts?: RallyStarts | null
+	},
+): string {
+	if (sport === 'nosework' && options.noseworkType) {
+		return noseworkTypeLabel(options.noseworkType)
+	}
+
+	if (sport === 'rally_obedience' && options.rallyStarts) {
+		return rallyStartsLabel(options.rallyStarts)
+	}
+
+	return '—'
+}
+
 export function competitionStatusLabel(status: CompetitionStatus): string {
 	return COMPETITION_STATUS_LABELS[status]
 }
@@ -82,6 +102,9 @@ export function deriveCompetitionStatus(
 	}
 	if (entries.every((entry) => entry.status === 'interested')) {
 		return 'interested'
+	}
+	if (entries.some((entry) => entry.status === 'reserve_slot')) {
+		return 'reserve_slot'
 	}
 	return 'in_progress'
 }
@@ -108,4 +131,13 @@ export const RALLY_STARTS_OPTIONS = Object.entries(RALLY_STARTS_LABELS).map(
 export const SPORT_OPTIONS: { value: Sport; label: string }[] = [
 	{ value: 'nosework', label: 'Nose Work' },
 	{ value: 'rally_obedience', label: 'Rally' },
+]
+
+export const COMPETITION_STATUS_OPTIONS = (
+	Object.entries(COMPETITION_STATUS_LABELS) as [CompetitionStatus, string][]
+).map(([value, label]) => ({ value, label }))
+
+export const COMPETITION_TYPE_FILTER_OPTIONS = [
+	...NOSEWORK_TYPE_OPTIONS,
+	...RALLY_STARTS_OPTIONS,
 ]

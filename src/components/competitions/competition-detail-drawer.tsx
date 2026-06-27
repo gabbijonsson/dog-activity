@@ -230,6 +230,13 @@ export function CompetitionDetailDrawer({
 								</Button>
 							)}
 
+							<CompetitionEntriesSection
+								key={competition.id}
+								competitionId={competition.id}
+								sport={competition.sport}
+								entries={competition.entries}
+							/>
+
 							<section>
 								<h3 className="island-kicker mb-3">Kalender</h3>
 								<ul className="divide-y divide-border/60 rounded-lg border border-border/70">
@@ -263,13 +270,6 @@ export function CompetitionDetailDrawer({
 									})}
 								</ul>
 							</section>
-
-							<CompetitionEntriesSection
-								key={competition.id}
-								competitionId={competition.id}
-								sport={competition.sport}
-								entries={competition.entries}
-							/>
 
 							{onEdit && (
 								<div className="flex flex-col gap-2 sm:flex-row">
@@ -307,7 +307,7 @@ export function CompetitionDetailDrawer({
 					<AlertDialogHeader>
 						<AlertDialogTitle>Ta bort {competition?.name}?</AlertDialogTitle>
 						<AlertDialogDescription>
-							Detta tar bort tävlingen, sportdetaljer, anmälningar och
+							Detta tar bort tävlingen, sportdetaljer, tilldelningar och
 							kalenderhändelser permanent.
 						</AlertDialogDescription>
 					</AlertDialogHeader>

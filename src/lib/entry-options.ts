@@ -24,7 +24,7 @@ export function getAvailableHandlers(
 	return handlers.filter((handler) => !enteredHandlerIds.has(handler.id))
 }
 
-export function canAddEntry(
+export function canAssignCompetition(
 	sport: Sport,
 	availableDogs: DogOption[],
 	availableHandlers: ProfileListItem[],
