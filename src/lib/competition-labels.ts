@@ -45,7 +45,7 @@ const RALLY_STARTS_LABELS: Record<RallyStarts, string> = {
 
 const COMPETITION_STATUS_LABELS: Record<CompetitionStatus, string> = {
 	empty: 'Inga anmälningar',
-	interested: 'Intresserad',
+	interested: 'Tilldelad',
 	in_progress: 'Pågår',
 	reserve_slot: 'Reserv',
 	registered: 'Anmäld',

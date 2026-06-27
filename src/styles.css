@@ -29,6 +29,8 @@
   --velocity-line: rgba(0, 109, 229, 0.2);
   --signal: #ffb93f;
   --signal-hot: #ff5f2f;
+  --reserve: #fbfcb8;
+  --reserve-deep: #828402;
 
   /* shadcn tokens — split-second tracking palette */
   --background: oklch(0.979 0.013 248);
@@ -95,6 +97,8 @@
   --velocity-line: rgba(54, 221, 255, 0.22);
   --signal: #ffc857;
   --signal-hot: #ff6a3d;
+  --reserve: #fbfcb8;
+  --reserve-deep: #a3a504;
 
   --background: oklch(0.16 0.03 258);
   --foreground: oklch(0.96 0.01 248);
@@ -173,6 +177,8 @@
   --color-velocity-line: var(--velocity-line);
   --color-signal: var(--signal);
   --color-signal-hot: var(--signal-hot);
+  --color-reserve: var(--reserve);
+  --color-reserve-deep: var(--reserve-deep);
   --color-event-sign-up-open: var(--event-sign-up-open);
   --color-event-sign-up-close: var(--event-sign-up-close);
   --color-event-payment: var(--event-payment);
