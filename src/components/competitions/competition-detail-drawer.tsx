@@ -191,7 +191,7 @@ export function CompetitionDetailDrawer({
 								/>
 								<DetailRow
 									label="Anmälan stänger"
-									value={formatDisplayDateTime(competition.sign_up_closes)}
+									value={formatDisplayDate(competition.sign_up_closes)}
 								/>
 								<DetailRow
 									label="Betalningsdatum"
@@ -252,7 +252,10 @@ export function CompetitionDetailDrawer({
 														{calendarEventLabel(event.event_type)}
 													</p>
 													<p className="text-xs text-muted-foreground">
-														{formatDisplayDateTime(event.event_date)}
+														{event.event_type === 'payment' ||
+														event.event_type === 'sign_up_close'
+															? formatDisplayDate(event.event_date)
+															: formatDisplayDateTime(event.event_date)}
 													</p>
 												</div>
 											</li>

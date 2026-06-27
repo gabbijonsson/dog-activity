@@ -23,8 +23,18 @@ export type DashboardCompetition = Competition & {
 	entries: CompetitionEntrySummary[]
 }
 
+type ProfileHandlerFields = Pick<
+	Database['public']['Tables']['profiles']['Row'],
+	'id' | 'full_name' | 'calendar_emoji'
+>
+
 export type CalendarEventWithCompetition = CalendarEvent & {
-	competitions: Pick<Competition, 'id' | 'name' | 'sport' | 'location'> | null
+	competitions: (Pick<Competition, 'id' | 'name' | 'sport' | 'location'> & {
+		nosework_details: { type: Database['public']['Enums']['nosework_type'] } | null
+		entries: Array<{
+			handler: ProfileHandlerFields | null
+		}>
+	}) | null
 }
 
 export type DashboardSummary = {
@@ -36,6 +46,9 @@ export type DashboardSummary = {
 
 const competitionWithEntriesSelect =
 	'*, entries(id, status, handler:profiles(full_name), dog:dogs(name))'
+
+const calendarEventCompetitionSelect =
+	'id, name, sport, location, nosework_details(type), entries(handler:profiles(id, full_name, calendar_emoji))'
 
 const FULLY_REGISTERED_STATUSES = new Set(['signed_up', 'paid'])
 
@@ -73,7 +86,9 @@ export async function fetchDashboardSummary(
 				.limit(5),
 			supabase
 				.from('calendar_events')
-				.select('*, competitions(id, name, sport, location)')
+				.select(
+					`*, competitions(${calendarEventCompetitionSelect})`,
+				)
 				.gte('event_date', now)
 				.order('event_date', { ascending: true })
 				.limit(20),
@@ -103,7 +118,7 @@ export async function fetchCalendarEventsForRange(
 ): Promise<CalendarEventWithCompetition[]> {
 	const { data, error } = await supabase
 		.from('calendar_events')
-		.select('*, competitions(id, name, sport, location)')
+		.select(`*, competitions(${calendarEventCompetitionSelect})`)
 		.gte('event_date', from)
 		.lte('event_date', to)
 		.order('event_date', { ascending: true })

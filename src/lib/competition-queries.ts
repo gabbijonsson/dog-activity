@@ -49,7 +49,10 @@ function toNullable(value: string): string | null {
 }
 
 export function formInputToSavePayload(
-	input: CompetitionFormInput,
+	input: Omit<
+		CompetitionFormInput,
+		'entry_dog_id' | 'entry_handler_id' | 'entry_status'
+	>,
 ): CompetitionSaveInput {
 	return {
 		name: input.name.trim(),
@@ -60,10 +63,7 @@ export function formInputToSavePayload(
 			input.sign_up_opens_date,
 			input.sign_up_opens_time,
 		),
-		sign_up_closes: datetimeFromDateAndTime(
-			input.sign_up_closes_date,
-			input.sign_up_closes_time,
-		),
+		sign_up_closes: paymentDeadlineFromDate(input.sign_up_closes),
 		payment_deadline: paymentDeadlineFromDate(input.payment_deadline),
 		event_date: datetimeFromDateAndTime(input.event_date, input.event_time),
 		url: input.url,
@@ -79,7 +79,6 @@ export function competitionToFormInput(
 	competition: CompetitionDetail,
 ): CompetitionFormInput {
 	const opens = splitDateTime(competition.sign_up_opens)
-	const closes = splitDateTime(competition.sign_up_closes)
 	const event = splitDateTime(competition.event_date)
 
 	return {
@@ -89,8 +88,7 @@ export function competitionToFormInput(
 		origin_location: competition.origin_location ?? '',
 		sign_up_opens_date: opens.date,
 		sign_up_opens_time: opens.time,
-		sign_up_closes_date: closes.date,
-		sign_up_closes_time: closes.time,
+		sign_up_closes: splitDateTime(competition.sign_up_closes).date,
 		payment_deadline: splitDateTime(competition.payment_deadline).date,
 		event_date: event.date,
 		event_time: event.time,
@@ -100,6 +98,9 @@ export function competitionToFormInput(
 		nosework_class: competition.nosework_details?.class,
 		nosework_official_status: competition.nosework_details?.official_status,
 		number_of_starts: competition.rally_details?.number_of_starts,
+		entry_dog_id: '',
+		entry_handler_id: '',
+		entry_status: 'interested',
 	}
 }
 

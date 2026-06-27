@@ -40,6 +40,7 @@ import {
 	toDateString,
 	toLocalDateString,
 } from '#/lib/dates.ts'
+import { calendarEventLabelWithEmojis } from '#/lib/handler-emoji.ts'
 import { queryKeys } from '#/lib/queryKeys.ts'
 import { sportLabel } from '#/lib/sports.ts'
 import { getBrowserSupabase } from '#/lib/supabase.ts'
@@ -232,7 +233,13 @@ export function MonthCalendar({
 									{popoverDayEvents.map((event) => {
 										const config = CALENDAR_EVENT_CONFIG[event.event_type]
 										const title = calendarEventDisplayTitle(event)
-										const showTime = event.event_type !== 'payment'
+										const displayTitle = calendarEventLabelWithEmojis(
+											title,
+											event.competitions?.entries ?? [],
+										)
+										const showTime =
+											event.event_type !== 'payment' &&
+											event.event_type !== 'sign_up_close'
 										return (
 											<li key={event.id}>
 												<button
@@ -260,7 +267,7 @@ export function MonthCalendar({
 															{config.label}
 														</span>
 														<span className="block truncate text-sm font-medium">
-															{title}
+															{displayTitle}
 														</span>
 														{showTime && (
 															<time
@@ -333,17 +340,21 @@ function CalendarDayWithEvents({
 					{visibleEvents.map((event) => {
 						const config = CALENDAR_EVENT_CONFIG[event.event_type]
 						const title = calendarEventDisplayTitle(event)
+						const displayTitle = calendarEventLabelWithEmojis(
+							title,
+							event.competitions?.entries ?? [],
+						)
 						return (
 							<span
 								key={event.id}
-								title={title}
+								title={displayTitle}
 								className={cn(
 									'block w-full truncate rounded-sm px-1 py-px text-left text-[0.625rem] leading-snug font-medium text-white',
 									config.dotClass,
 									modifiers.outside && 'opacity-60',
 								)}
 							>
-								{title}
+								{displayTitle}
 							</span>
 						)
 					})}

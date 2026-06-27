@@ -3,8 +3,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { useEffect } from 'react'
 import { toast } from 'sonner'
-
+import { useAuth } from '#/components/auth-provider.tsx'
 import { DateTimePickerField } from '#/components/competitions/datetime-picker-field.tsx'
+import { EntryRegistrationFields } from '#/components/competitions/entry-registration-fields.tsx'
 import { OriginAddressFavorites } from '#/components/competitions/origin-address-favorites.tsx'
 import { SectionSkeleton } from '#/components/dashboard/dashboard-primitives.tsx'
 import { DatePickerField } from '#/components/dogs/date-picker-field.tsx'
@@ -41,6 +42,8 @@ import {
 	fetchCompetitionById,
 	formInputToSavePayload,
 } from '#/lib/competition-queries.ts'
+import { fetchDogsList } from '#/lib/dog-queries.ts'
+import { fetchProfilesList } from '#/lib/profile-queries.ts'
 import { queryKeys } from '#/lib/queryKeys.ts'
 import {
 	type CompetitionFormInput,
@@ -48,6 +51,7 @@ import {
 } from '#/lib/schemas.ts'
 import { getBrowserSupabase } from '#/lib/supabase.ts'
 import { CompetitionSaveError, saveCompetition } from '#/server/competitions.ts'
+import { createEntry, EntryError } from '#/server/entries.ts'
 
 const emptyValues: CompetitionFormInput = {
 	name: '',
@@ -56,8 +60,7 @@ const emptyValues: CompetitionFormInput = {
 	origin_location: '',
 	sign_up_opens_date: '',
 	sign_up_opens_time: '09:00',
-	sign_up_closes_date: '',
-	sign_up_closes_time: '17:00',
+	sign_up_closes: '',
 	payment_deadline: '',
 	event_date: '',
 	event_time: '08:00',
@@ -67,6 +70,9 @@ const emptyValues: CompetitionFormInput = {
 	nosework_class: 'class_1',
 	nosework_official_status: 'official',
 	number_of_starts: 'single',
+	entry_dog_id: '',
+	entry_handler_id: '',
+	entry_status: 'interested',
 }
 
 interface CompetitionFormDrawerProps {
@@ -85,6 +91,7 @@ export function CompetitionFormDrawer({
 	onSaved,
 }: CompetitionFormDrawerProps) {
 	const queryClient = useQueryClient()
+	const { user } = useAuth()
 	const isEditing = !!competitionId
 
 	const { data: existingCompetition, isLoading } = useQuery({
@@ -97,15 +104,54 @@ export function CompetitionFormDrawer({
 		enabled: open && isEditing,
 	})
 
+	const { data: dogs = [] } = useQuery({
+		queryKey: queryKeys.dogs.list(),
+		queryFn: async () => {
+			const supabase = getBrowserSupabase()
+			return fetchDogsList(supabase)
+		},
+		enabled: open && !isEditing,
+	})
+
+	const { data: handlers = [] } = useQuery({
+		queryKey: queryKeys.profiles.list(),
+		queryFn: async () => {
+			const supabase = getBrowserSupabase()
+			return fetchProfilesList(supabase)
+		},
+		enabled: open && !isEditing,
+	})
+
 	const mutation = useMutation({
 		mutationFn: async (values: CompetitionFormInput) => {
-			const payload = formInputToSavePayload(values)
-			return saveCompetition({
+			const { entry_dog_id, entry_handler_id, entry_status, ...formValues } =
+				values
+			const payload = formInputToSavePayload(formValues)
+			const result = await saveCompetition({
 				data: {
 					...payload,
 					id: competitionId ?? undefined,
 				},
 			})
+
+			if (
+				!isEditing &&
+				entry_dog_id &&
+				entry_handler_id &&
+				entry_dog_id.length > 0 &&
+				entry_handler_id.length > 0
+			) {
+				await createEntry({
+					data: {
+						competition_id: result.id,
+						dog_id: entry_dog_id,
+						handler_id: entry_handler_id,
+						status: entry_status,
+					},
+				})
+			}
+
+			return result
 		},
 		onSuccess: (result) => {
 			void queryClient.invalidateQueries({
@@ -115,13 +161,14 @@ export function CompetitionFormDrawer({
 			void queryClient.invalidateQueries({
 				queryKey: queryKeys.calendarEvents.all,
 			})
+			void queryClient.invalidateQueries({ queryKey: queryKeys.dogs.all })
 			toast.success(isEditing ? 'Tävling uppdaterad' : 'Tävling tillagd')
 			onOpenChange(false)
 			onSaved?.(result.id)
 		},
 		onError: (error) => {
 			const message =
-				error instanceof CompetitionSaveError
+				error instanceof CompetitionSaveError || error instanceof EntryError
 					? error.message
 					: isEditing
 						? 'Kunde inte uppdatera tävlingen'
@@ -155,9 +202,16 @@ export function CompetitionFormDrawer({
 			form.reset({
 				...emptyValues,
 				event_date: initialEventDate,
+				entry_handler_id: user?.id ?? '',
 			})
+			return
 		}
-	}, [open, isEditing, existingCompetition, initialEventDate, form])
+
+		form.reset({
+			...emptyValues,
+			entry_handler_id: user?.id ?? '',
+		})
+	}, [open, isEditing, existingCompetition, initialEventDate, user?.id, form])
 
 	return (
 		<Sheet open={open} onOpenChange={onOpenChange}>
@@ -438,23 +492,21 @@ export function CompetitionFormDrawer({
 									)}
 								</form.Field>
 
-								<form.Field name="sign_up_closes_date">
-									{(dateField) => (
-										<form.Field name="sign_up_closes_time">
-											{(timeField) => (
-												<DateTimePickerField
-													dateId={dateField.name}
-													timeId={timeField.name}
-													dateLabel="Anmälan stänger"
-													dateValue={dateField.state.value}
-													timeValue={timeField.state.value}
-													onDateChange={dateField.handleChange}
-													onTimeChange={timeField.handleChange}
-													onBlur={dateField.handleBlur}
-													dateInvalid={dateField.state.meta.errors.length > 0}
-												/>
-											)}
-										</form.Field>
+								<form.Field name="sign_up_closes">
+									{(field) => (
+										<FieldShell
+											label="Anmälan stänger"
+											htmlFor={field.name}
+											errors={field.state.meta.errors}
+										>
+											<DatePickerField
+												id={field.name}
+												value={field.state.value}
+												onChange={field.handleChange}
+												onBlur={field.handleBlur}
+												aria-invalid={field.state.meta.errors.length > 0}
+											/>
+										</FieldShell>
 									)}
 								</form.Field>
 
@@ -496,6 +548,45 @@ export function CompetitionFormDrawer({
 									)}
 								</form.Field>
 							</div>
+
+							{!isEditing && (
+								<div className="space-y-4 rounded-lg border border-border/70 bg-muted/20 p-4">
+									<p className="island-kicker">Anmälan</p>
+									<form.Subscribe selector={(state) => state.values.sport}>
+										{(sport) => (
+											<form.Field name="entry_dog_id">
+												{(dogField) => (
+													<form.Field name="entry_handler_id">
+														{(handlerField) => (
+															<form.Field name="entry_status">
+																{(statusField) => (
+																	<EntryRegistrationFields
+																		sport={sport}
+																		enteredDogIds={new Set()}
+																		enteredHandlerIds={new Set()}
+																		dogs={dogs}
+																		handlers={handlers}
+																		dogId={dogField.state.value}
+																		handlerId={handlerField.state.value}
+																		status={statusField.state.value}
+																		onDogIdChange={dogField.handleChange}
+																		onHandlerIdChange={
+																			handlerField.handleChange
+																		}
+																		onStatusChange={statusField.handleChange}
+																		disabled={mutation.isPending}
+																		idPrefix="create-entry"
+																	/>
+																)}
+															</form.Field>
+														)}
+													</form.Field>
+												)}
+											</form.Field>
+										)}
+									</form.Subscribe>
+								</div>
+							)}
 
 							<form.Field name="url">
 								{(field) => (

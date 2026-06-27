@@ -17,7 +17,7 @@ import {
 	type DashboardCompetition,
 	fetchDashboardSummary,
 } from '#/lib/dashboard-queries.ts'
-import { formatShortDateTime } from '#/lib/dates.ts'
+import { formatShortDate, formatShortDateTime } from '#/lib/dates.ts'
 import { queryKeys } from '#/lib/queryKeys.ts'
 import { sportLabel } from '#/lib/sports.ts'
 import { getBrowserSupabase } from '#/lib/supabase.ts'
@@ -195,7 +195,9 @@ function DeadlineCard({
 										dateTime={competition[dateField]}
 										className="shrink-0 text-xs font-semibold tabular-nums text-primary"
 									>
-										{formatShortDateTime(competition[dateField])}
+										{dateField === 'sign_up_closes'
+											? formatShortDate(competition[dateField])
+											: formatShortDateTime(competition[dateField])}
 									</time>
 								</button>
 							</li>

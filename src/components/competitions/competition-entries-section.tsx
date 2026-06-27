@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 
 import { useAuth } from '#/components/auth-provider.tsx'
+import { EntryRegistrationFields } from '#/components/competitions/entry-registration-fields.tsx'
 import { EmptyState } from '#/components/dashboard/dashboard-primitives.tsx'
 import {
 	AlertDialog,
@@ -17,7 +18,6 @@ import {
 	AlertDialogTitle,
 } from '#/components/ui/alert-dialog.tsx'
 import { Button } from '#/components/ui/button.tsx'
-import { Label } from '#/components/ui/label.tsx'
 import {
 	Select,
 	SelectContent,
@@ -29,7 +29,12 @@ import type { CompetitionEntry } from '#/lib/competition-queries.ts'
 import type { Database } from '#/lib/database.types.ts'
 import { fetchDogsList } from '#/lib/dog-queries.ts'
 import { ENTRY_STATUS_OPTIONS, entryStatusLabel } from '#/lib/entries.ts'
-import { fetchProfilesList, profileDisplayName } from '#/lib/profile-queries.ts'
+import {
+	canAddEntry,
+	getAvailableDogs,
+	getAvailableHandlers,
+} from '#/lib/entry-options.ts'
+import { fetchProfilesList } from '#/lib/profile-queries.ts'
 import { queryKeys } from '#/lib/queryKeys.ts'
 import { type EntryCreateInput, entryCreateSchema } from '#/lib/schemas.ts'
 import { getBrowserSupabase } from '#/lib/supabase.ts'
@@ -103,11 +108,19 @@ export function CompetitionEntriesSection({
 	})
 
 	const enteredDogIds = new Set(
-		entries.map((entry) => entry.dog?.id).filter(Boolean),
+		entries.flatMap((entry) => (entry.dog?.id ? [entry.dog.id] : [])),
 	)
 	const enteredHandlerIds = new Set(
-		entries.map((entry) => entry.handler?.id).filter(Boolean),
+		entries.flatMap((entry) => (entry.handler?.id ? [entry.handler.id] : [])),
 	)
+
+	const availableDogs = getAvailableDogs(dogs, enteredDogIds)
+	const availableHandlers = getAvailableHandlers(
+		handlers,
+		enteredHandlerIds,
+		sport,
+	)
+	const showAddForm = canAddEntry(sport, availableDogs, availableHandlers)
 
 	const createMutation = useMutation({
 		mutationFn: async (values: EntryCreateInput) =>
@@ -182,124 +195,64 @@ export function CompetitionEntriesSection({
 		<section>
 			<h3 className="island-kicker mb-3">Anmälningar</h3>
 
-			<form
-				className="mb-4 space-y-3 rounded-lg border border-border/70 bg-muted/15 p-4"
-				onSubmit={(event) => {
-					event.preventDefault()
-					void form.handleSubmit()
-				}}
-			>
-				<p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-					Lägg till
-				</p>
-
-				<form.Field name="dog_id">
-					{(field) => (
-						<div className="space-y-1.5">
-							<Label htmlFor="entry-dog">Hund</Label>
-							<Select
-								value={field.state.value}
-								onValueChange={field.handleChange}
-								disabled={dogs.length === 0 || createMutation.isPending}
-							>
-								<SelectTrigger id="entry-dog" className="w-full bg-background">
-									<SelectValue placeholder="Välj hund" />
-								</SelectTrigger>
-								<SelectContent>
-									{dogs.map((dog) => {
-										const taken = enteredDogIds.has(dog.id)
-										return (
-											<SelectItem key={dog.id} value={dog.id} disabled={taken}>
-												{dog.name}
-												{taken ? ' (redan anmäld)' : ''}
-											</SelectItem>
-										)
-									})}
-								</SelectContent>
-							</Select>
-						</div>
-					)}
-				</form.Field>
-
-				<form.Field name="handler_id">
-					{(field) => (
-						<div className="space-y-1.5">
-							<Label htmlFor="entry-handler">Hundförare</Label>
-							<Select
-								value={field.state.value}
-								onValueChange={field.handleChange}
-								disabled={handlers.length === 0 || createMutation.isPending}
-							>
-								<SelectTrigger
-									id="entry-handler"
-									className="w-full bg-background"
-								>
-									<SelectValue placeholder="Välj handler" />
-								</SelectTrigger>
-								<SelectContent>
-									{handlers.map((handler) => {
-										const taken =
-											sport === 'nosework' && enteredHandlerIds.has(handler.id)
-										return (
-											<SelectItem
-												key={handler.id}
-												value={handler.id}
-												disabled={taken}
-											>
-												{profileDisplayName(handler)}
-												{taken ? ' (redan anmäld)' : ''}
-											</SelectItem>
-										)
-									})}
-								</SelectContent>
-							</Select>
-						</div>
-					)}
-				</form.Field>
-
-				<form.Field name="status">
-					{(field) => (
-						<div className="space-y-1.5">
-							<Label htmlFor="entry-status">Status</Label>
-							<Select
-								value={field.state.value}
-								onValueChange={(value) =>
-									field.handleChange(value as EntryStatus)
-								}
-								disabled={createMutation.isPending}
-							>
-								<SelectTrigger
-									id="entry-status"
-									className="w-full bg-background"
-								>
-									<SelectValue />
-								</SelectTrigger>
-								<SelectContent>
-									{ENTRY_STATUS_OPTIONS.map((option) => (
-										<SelectItem key={option.value} value={option.value}>
-											{option.label}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-						</div>
-					)}
-				</form.Field>
-
-				<Button
-					type="submit"
-					className="w-full"
-					disabled={createMutation.isPending || dogs.length === 0}
+			{showAddForm && (
+				<form
+					className="mb-4 space-y-3 rounded-lg border border-border/70 bg-muted/15 p-4"
+					onSubmit={(event) => {
+						event.preventDefault()
+						void form.handleSubmit()
+					}}
 				>
-					<Plus className="size-4" aria-hidden="true" />
-					{createMutation.isPending ? 'Lägger till…' : 'Lägg till anmälan'}
-				</Button>
-			</form>
+					<p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+						Lägg till
+					</p>
+
+					<form.Field name="dog_id">
+						{(dogField) => (
+							<form.Field name="handler_id">
+								{(handlerField) => (
+									<form.Field name="status">
+										{(statusField) => (
+											<EntryRegistrationFields
+												sport={sport}
+												enteredDogIds={enteredDogIds}
+												enteredHandlerIds={enteredHandlerIds}
+												dogs={dogs}
+												handlers={handlers}
+												dogId={dogField.state.value}
+												handlerId={handlerField.state.value}
+												status={statusField.state.value}
+												onDogIdChange={dogField.handleChange}
+												onHandlerIdChange={handlerField.handleChange}
+												onStatusChange={statusField.handleChange}
+												disabled={createMutation.isPending}
+											/>
+										)}
+									</form.Field>
+								)}
+							</form.Field>
+						)}
+					</form.Field>
+
+					<Button
+						type="submit"
+						className="w-full"
+						disabled={createMutation.isPending}
+					>
+						<Plus className="size-4" aria-hidden="true" />
+						{createMutation.isPending ? 'Lägger till…' : 'Lägg till anmälan'}
+					</Button>
+				</form>
+			)}
 
 			{entries.length === 0 ? (
 				<EmptyState
 					title="Inga anmälningar än"
-					description="Lägg till hund och handler ovan."
+					description={
+						showAddForm
+							? 'Lägg till hund och handler ovan.'
+							: 'Alla hundar är redan anmälda.'
+					}
 				/>
 			) : (
 				<ul className="divide-y divide-border/60 rounded-lg border border-border/70">

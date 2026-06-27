@@ -35,6 +35,14 @@ export const loginSchema = z.object({
 
 export type LoginInput = z.infer<typeof loginSchema>
 
+const entryStatusEnum = z.enum([
+	'interested',
+	'signed_up',
+	'slot_assigned',
+	'reserve_slot',
+	'paid',
+])
+
 const sportEnum = z.enum(['nosework', 'rally_obedience'])
 const noseworkTypeEnum = z.enum([
 	'tsm',
@@ -55,8 +63,7 @@ export const competitionFormSchema = z
 		origin_location: z.string().trim().min(1, { error: 'Från-adress krävs' }),
 		sign_up_opens_date: z.string().min(1, { error: 'Datum krävs' }),
 		sign_up_opens_time: z.string().min(1, { error: 'Tid krävs' }),
-		sign_up_closes_date: z.string().min(1, { error: 'Datum krävs' }),
-		sign_up_closes_time: z.string().min(1, { error: 'Tid krävs' }),
+		sign_up_closes: z.string().min(1, { error: 'Datum krävs' }),
 		payment_deadline: z.string().min(1, { error: 'Datum krävs' }),
 		event_date: z.string().min(1, { error: 'Datum krävs' }),
 		event_time: z.string().min(1, { error: 'Tid krävs' }),
@@ -66,6 +73,9 @@ export const competitionFormSchema = z
 		nosework_class: noseworkClassEnum.optional(),
 		nosework_official_status: noseworkOfficialStatusEnum.optional(),
 		number_of_starts: rallyStartsEnum.optional(),
+		entry_dog_id: z.string(),
+		entry_handler_id: z.string(),
+		entry_status: entryStatusEnum,
 	})
 	.superRefine((data, ctx) => {
 		if (data.sport === 'nosework') {
@@ -173,14 +183,6 @@ export const competitionSaveSchema = z
 	})
 
 export type CompetitionSaveInput = z.infer<typeof competitionSaveSchema>
-
-const entryStatusEnum = z.enum([
-	'interested',
-	'signed_up',
-	'slot_assigned',
-	'reserve_slot',
-	'paid',
-])
 
 export const entryCreateSchema = z.object({
 	competition_id: z.uuid(),

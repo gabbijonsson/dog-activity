@@ -294,18 +294,21 @@ export type Database = {
 			}
 			profiles: {
 				Row: {
+					calendar_emoji: string | null
 					email: string
 					full_name: string | null
 					id: string
 					role: Database['public']['Enums']['user_role']
 				}
 				Insert: {
+					calendar_emoji?: string | null
 					email: string
 					full_name?: string | null
 					id: string
 					role?: Database['public']['Enums']['user_role']
 				}
 				Update: {
+					calendar_emoji?: string | null
 					email?: string
 					full_name?: string | null
 					id?: string

@@ -11,8 +11,8 @@ import {
 } from '#/lib/calendar-events.ts'
 import { fetchDashboardSummary } from '#/lib/dashboard-queries.ts'
 import { formatDisplayDate, formatDisplayDateTime } from '#/lib/dates.ts'
+import { timelineSportDetail } from '#/lib/entry-options.ts'
 import { queryKeys } from '#/lib/queryKeys.ts'
-import { sportLabel } from '#/lib/sports.ts'
 import { getBrowserSupabase } from '#/lib/supabase.ts'
 import { cn } from '#/lib/utils.ts'
 
@@ -55,10 +55,18 @@ export function UpcomingEventsTable({
 					{data.upcomingCalendarEvents.map((event) => {
 						const config = CALENDAR_EVENT_CONFIG[event.event_type]
 						const title = calendarEventDisplayTitle(event)
-						const sport = event.competitions
-							? sportLabel(event.competitions.sport)
+						const competition = event.competitions
+						const sportDetail = competition
+							? timelineSportDetail(competition.sport, {
+									noseworkType: competition.nosework_details?.type,
+									handlerNames: competition.entries
+										.map((entry) => entry.handler?.full_name ?? '')
+										.filter(Boolean),
+								})
 							: '—'
-						const showTime = event.event_type !== 'payment'
+						const showTime =
+							event.event_type !== 'payment' &&
+							event.event_type !== 'sign_up_close'
 
 						return (
 							<li
@@ -80,7 +88,7 @@ export function UpcomingEventsTable({
 										{config.label}
 									</span>
 									<span className="text-xs text-muted-foreground sm:order-none">
-										{sport}
+										{sportDetail}
 									</span>
 								</div>
 								<time
