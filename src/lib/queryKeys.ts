@@ -12,6 +12,7 @@ export const queryKeys = {
 		all: ['dogs'] as const,
 		list: () => [...queryKeys.dogs.all, 'list'] as const,
 		detail: (id: string) => [...queryKeys.dogs.all, id] as const,
+		form: (id: string) => [...queryKeys.dogs.all, 'form', id] as const,
 	},
 	competitions: {
 		all: ['competitions'] as const,

@@ -1,6 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 
 import { toCompetitionRowPayload } from '#/lib/competition-queries.ts'
+import { isValidNoseworkTypeForClass } from '#/lib/nosework-rules.ts'
 import { competitionSaveSchema } from '#/lib/schemas.ts'
 import { createServerSupabase } from '#/lib/supabase.server.ts'
 import { computeCompetitionMapFields } from '#/server/maps.ts'
@@ -43,6 +44,12 @@ async function upsertSportDetails(
 			!input.nosework_official_status
 		) {
 			throw new CompetitionSaveError('Nose Work-fält saknas')
+		}
+
+		if (
+			!isValidNoseworkTypeForClass(input.nosework_type, input.nosework_class)
+		) {
+			throw new CompetitionSaveError('Elit har endast TSM')
 		}
 
 		const { error } = await supabase.from('nosework_details').insert({

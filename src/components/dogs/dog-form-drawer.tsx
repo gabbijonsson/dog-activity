@@ -59,7 +59,7 @@ export function DogFormDrawer({
 	const isEditing = !!dogId
 
 	const { data: existingDogData, isLoading } = useQuery({
-		queryKey: queryKeys.dogs.detail(dogId ?? 'new'),
+		queryKey: queryKeys.dogs.form(dogId ?? 'new'),
 		queryFn: async () => {
 			if (!dogId) return null
 			const supabase = getBrowserSupabase()
@@ -111,7 +111,7 @@ export function DogFormDrawer({
 			return
 		}
 
-		if (isEditing && existingDogData) {
+		if (isEditing && existingDogData?.dog) {
 			const { dog, priorCounts } = existingDogData
 			form.reset({
 				name: dog.name,
@@ -148,119 +148,121 @@ export function DogFormDrawer({
 					</SheetBody>
 				) : (
 					<form
-						className="flex min-h-0 flex-1 flex-col"
+						className="flex min-h-0 flex-1 flex-col overflow-hidden"
 						onSubmit={(event) => {
 							event.preventDefault()
 							event.stopPropagation()
 							void form.handleSubmit()
 						}}
 					>
-						<SheetBody className="space-y-4">
-							<form.Field name="name">
-								{(field) => (
-									<div className="space-y-2">
-										<Label htmlFor={field.name}>Namn</Label>
-										<Input
-											id={field.name}
-											name={field.name}
-											value={field.state.value}
-											onBlur={field.handleBlur}
-											onChange={(event) =>
-												field.handleChange(event.target.value)
-											}
-											aria-invalid={field.state.meta.errors.length > 0}
-										/>
-										{field.state.meta.errors.map((error) => (
-											<p
-												key={error?.message}
-												className="text-sm text-destructive"
-											>
-												{error?.message}
-											</p>
-										))}
-									</div>
-								)}
-							</form.Field>
+						<SheetBody className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
+							<div className="shrink-0 space-y-4">
+								<form.Field name="name">
+									{(field) => (
+										<div className="space-y-2">
+											<Label htmlFor={field.name}>Namn</Label>
+											<Input
+												id={field.name}
+												name={field.name}
+												value={field.state.value}
+												onBlur={field.handleBlur}
+												onChange={(event) =>
+													field.handleChange(event.target.value)
+												}
+												aria-invalid={field.state.meta.errors.length > 0}
+											/>
+											{field.state.meta.errors.map((error) => (
+												<p
+													key={error?.message}
+													className="text-sm text-destructive"
+												>
+													{error?.message}
+												</p>
+											))}
+										</div>
+									)}
+								</form.Field>
 
-							<form.Field name="breed">
-								{(field) => (
-									<div className="space-y-2">
-										<Label htmlFor={field.name}>Ras</Label>
-										<Input
-											id={field.name}
-											name={field.name}
-											value={field.state.value}
-											onBlur={field.handleBlur}
-											onChange={(event) =>
-												field.handleChange(event.target.value)
-											}
-										/>
-									</div>
-								)}
-							</form.Field>
+								<form.Field name="breed">
+									{(field) => (
+										<div className="space-y-2">
+											<Label htmlFor={field.name}>Ras</Label>
+											<Input
+												id={field.name}
+												name={field.name}
+												value={field.state.value}
+												onBlur={field.handleBlur}
+												onChange={(event) =>
+													field.handleChange(event.target.value)
+												}
+											/>
+										</div>
+									)}
+								</form.Field>
 
-							<form.Field name="date_of_birth">
-								{(field) => (
-									<div className="space-y-2">
-										<Label htmlFor={field.name}>Födelsedatum</Label>
-										<DatePickerField
-											id={field.name}
-											value={field.state.value}
-											onBlur={field.handleBlur}
-											onChange={field.handleChange}
-										/>
-									</div>
-								)}
-							</form.Field>
+								<form.Field name="date_of_birth">
+									{(field) => (
+										<div className="space-y-2">
+											<Label htmlFor={field.name}>Födelsedatum</Label>
+											<DatePickerField
+												id={field.name}
+												value={field.state.value}
+												onBlur={field.handleBlur}
+												onChange={field.handleChange}
+											/>
+										</div>
+									)}
+								</form.Field>
 
-							<form.Field name="withers_height_cm">
-								{(field) => (
-									<div className="space-y-2">
-										<Label htmlFor={field.name}>Mankhöjd (cm)</Label>
-										<Input
-											id={field.name}
-											name={field.name}
-											type="number"
-											min={1}
-											max={120}
-											inputMode="numeric"
-											placeholder="t.ex. 45"
-											value={field.state.value}
-											onBlur={field.handleBlur}
-											onChange={(event) =>
-												field.handleChange(event.target.value)
-											}
-											aria-invalid={field.state.meta.errors.length > 0}
-										/>
-										{field.state.meta.errors.map((error) => (
-											<p
-												key={error?.message}
-												className="text-sm text-destructive"
-											>
-												{error?.message}
-											</p>
-										))}
-									</div>
-								)}
-							</form.Field>
+								<form.Field name="withers_height_cm">
+									{(field) => (
+										<div className="space-y-2">
+											<Label htmlFor={field.name}>Mankhöjd (cm)</Label>
+											<Input
+												id={field.name}
+												name={field.name}
+												type="number"
+												min={1}
+												max={120}
+												inputMode="numeric"
+												placeholder="t.ex. 45"
+												value={field.state.value}
+												onBlur={field.handleBlur}
+												onChange={(event) =>
+													field.handleChange(event.target.value)
+												}
+												aria-invalid={field.state.meta.errors.length > 0}
+											/>
+											{field.state.meta.errors.map((error) => (
+												<p
+													key={error?.message}
+													className="text-sm text-destructive"
+												>
+													{error?.message}
+												</p>
+											))}
+										</div>
+									)}
+								</form.Field>
 
-							<form.Field name="notes">
-								{(field) => (
-									<div className="space-y-2">
-										<Label htmlFor={field.name}>Anteckningar</Label>
-										<Textarea
-											id={field.name}
-											name={field.name}
-											rows={4}
-											value={field.state.value}
-											onBlur={field.handleBlur}
-											onChange={(event) =>
-												field.handleChange(event.target.value)
-											}
-										/>
-									</div>
-								)}
-							</form.Field>
+								<form.Field name="notes">
+									{(field) => (
+										<div className="space-y-2">
+											<Label htmlFor={field.name}>Anteckningar</Label>
+											<Textarea
+												id={field.name}
+												name={field.name}
+												rows={4}
+												value={field.state.value}
+												onBlur={field.handleBlur}
+												onChange={(event) =>
+													field.handleChange(event.target.value)
+												}
+											/>
+										</div>
+									)}
+								</form.Field>
+							</div>
 
 							<form.Field name="prior_nosework_diplomas">
 								{(noseworkField) => (

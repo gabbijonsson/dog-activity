@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 
 import { CompetitionDetailDrawer } from '#/components/competitions/competition-detail-drawer.tsx'
+import { DogMeritsSummary } from '#/components/dogs/dog-merits-summary.tsx'
 import {
 	EmptyState,
 	ErrorState,
@@ -29,12 +30,14 @@ import {
 	SheetTitle,
 } from '#/components/ui/sheet.tsx'
 import { formatDisplayDate } from '#/lib/dates.ts'
+import { summarizeDogMerits } from '#/lib/dog-merits.ts'
 import {
 	DogDeleteRestrictedError,
 	deleteDog,
 	fetchDogById,
 } from '#/lib/dog-queries.ts'
 import { entryStatusLabel } from '#/lib/entries.ts'
+import { fetchPromotionContext } from '#/lib/promotion-queries.ts'
 import { queryKeys } from '#/lib/queryKeys.ts'
 import { sportLabel } from '#/lib/sports.ts'
 import { getBrowserSupabase } from '#/lib/supabase.ts'
@@ -74,6 +77,15 @@ export function DogDetailDrawer({
 		enabled: open && !!dogId,
 	})
 
+	const { data: promotionContext } = useQuery({
+		queryKey: queryKeys.promotion.context(),
+		queryFn: async () => {
+			const supabase = getBrowserSupabase()
+			return fetchPromotionContext(supabase)
+		},
+		enabled: open && !!dogId,
+	})
+
 	const deleteMutation = useMutation({
 		mutationFn: async () => {
 			if (!dogId) return
@@ -97,6 +109,10 @@ export function DogDetailDrawer({
 	})
 
 	const hasEntries = (dog?.entries.length ?? 0) > 0
+	const merits =
+		dog && promotionContext
+			? summarizeDogMerits(dog.id, promotionContext)
+			: { nosework: [], rally: [] }
 
 	return (
 		<>
@@ -124,8 +140,8 @@ export function DogDetailDrawer({
 							/>
 						</SheetBody>
 					) : dog ? (
-						<SheetBody className="space-y-6">
-							<dl className="space-y-4 text-sm">
+						<SheetBody className="flex min-h-0 flex-1 flex-col gap-6 overflow-hidden">
+							<dl className="shrink-0 space-y-4 text-sm">
 								<DetailRow label="Namn" value={dog.name} />
 								<DetailRow label="Ras" value={dog.breed ?? '—'} />
 								<DetailRow
@@ -149,48 +165,57 @@ export function DogDetailDrawer({
 								)}
 							</dl>
 
-							<section>
-								<h3 className="island-kicker mb-3">Tävlingar</h3>
+							<section className="shrink-0">
+								<h3 className="island-kicker mb-3">Meriter</h3>
+								<div className="rounded-lg border border-border/70 bg-muted/15 p-4">
+									<DogMeritsSummary merits={merits} variant="full" />
+								</div>
+							</section>
+
+							<section className="flex min-h-0 flex-1 flex-col">
+								<h3 className="island-kicker mb-3 shrink-0">Tävlingar</h3>
 								{dog.entries.length === 0 ? (
 									<EmptyState
 										title="Inga anmälningar än"
 										description="Anmäl hunden via en tävling."
 									/>
 								) : (
-									<ul className="divide-y divide-border/60 rounded-lg border border-border/70">
-										{dog.entries.map((entry) => {
-											const competition = entry.competition
-											if (!competition) return null
+									<div className="min-h-0 overflow-y-auto rounded-lg border border-border/70">
+										<ul className="divide-y divide-border/60">
+											{dog.entries.map((entry) => {
+												const competition = entry.competition
+												if (!competition) return null
 
-											return (
-												<li key={entry.id}>
-													<button
-														type="button"
-														className="group flex w-full flex-col gap-1 px-4 py-3 text-left transition-colors hover:bg-muted/40"
-														onClick={() => {
-															setSelectedCompetitionId(competition.id)
-															setCompetitionDrawerOpen(true)
-														}}
-													>
-														<span className="text-sm font-medium underline-offset-2 group-hover:text-primary group-hover:underline">
-															{competition.name}
-														</span>
-														<span className="text-xs text-muted-foreground">
-															{sportLabel(competition.sport)} ·{' '}
-															{formatDisplayDate(competition.event_date)}
-														</span>
-														<span className="text-xs font-medium text-[var(--palm)]">
-															{entryStatusLabel(entry.status)}
-														</span>
-													</button>
-												</li>
-											)
-										})}
-									</ul>
+												return (
+													<li key={entry.id}>
+														<button
+															type="button"
+															className="group flex w-full flex-col gap-1 px-4 py-3 text-left transition-colors hover:bg-muted/40"
+															onClick={() => {
+																setSelectedCompetitionId(competition.id)
+																setCompetitionDrawerOpen(true)
+															}}
+														>
+															<span className="text-sm font-medium underline-offset-2 group-hover:text-primary group-hover:underline">
+																{competition.name}
+															</span>
+															<span className="text-xs text-muted-foreground">
+																{sportLabel(competition.sport)} ·{' '}
+																{formatDisplayDate(competition.event_date)}
+															</span>
+															<span className="text-xs font-medium text-[var(--palm)]">
+																{entryStatusLabel(entry.status)}
+															</span>
+														</button>
+													</li>
+												)
+											})}
+										</ul>
+									</div>
 								)}
 							</section>
 
-							<div className="flex flex-col gap-2 sm:flex-row">
+							<div className="flex shrink-0 flex-col gap-2 sm:flex-row">
 								<Button
 									variant="outline"
 									className="flex-1"
@@ -210,7 +235,7 @@ export function DogDetailDrawer({
 							</div>
 
 							{hasEntries && (
-								<p className="text-xs text-muted-foreground">
+								<p className="shrink-0 text-xs text-muted-foreground">
 									Hundar med tävlingsanmälningar kan inte tas bort.
 								</p>
 							)}

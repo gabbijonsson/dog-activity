@@ -39,6 +39,10 @@ import {
 	SPORT_OPTIONS,
 } from '#/lib/competition-labels.ts'
 import {
+	normalizeNoseworkTypeForClass,
+	noseworkTypeOptionsForClass,
+} from '#/lib/nosework-rules.ts'
+import {
 	competitionToFormInput,
 	fetchCompetitionById,
 	formInputToSavePayload,
@@ -310,60 +314,101 @@ export function CompetitionFormDrawer({
 									sport === 'nosework' ? (
 										<div className="space-y-4 rounded-lg border border-border/70 bg-muted/20 p-4">
 											<p className="island-kicker">Nose Work</p>
-											<form.Field name="nosework_type">
-												{(field) => (
-													<FieldShell label="Typ" htmlFor={field.name}>
-														<Select
-															value={field.state.value}
-															onValueChange={(value) =>
-																field.handleChange(
-																	value as CompetitionFormInput['nosework_type'],
-																)
-															}
-														>
-															<SelectTrigger id={field.name} className="w-full">
-																<SelectValue placeholder="Välj typ" />
-															</SelectTrigger>
-															<SelectContent>
-																{NOSEWORK_TYPE_OPTIONS.map((option) => (
-																	<SelectItem
-																		key={option.value}
-																		value={option.value}
-																	>
-																		{option.label}
-																	</SelectItem>
-																))}
-															</SelectContent>
-														</Select>
-													</FieldShell>
-												)}
-											</form.Field>
 											<form.Field name="nosework_class">
-												{(field) => (
-													<FieldShell label="Klass" htmlFor={field.name}>
-														<Select
-															value={field.state.value}
-															onValueChange={(value) =>
-																field.handleChange(
-																	value as CompetitionFormInput['nosework_class'],
-																)
-															}
-														>
-															<SelectTrigger id={field.name} className="w-full">
-																<SelectValue placeholder="Välj klass" />
-															</SelectTrigger>
-															<SelectContent>
-																{NOSEWORK_CLASS_OPTIONS.map((option) => (
-																	<SelectItem
-																		key={option.value}
-																		value={option.value}
+												{(classField) => (
+													<form.Subscribe
+														selector={(state) => state.values.nosework_type}
+													>
+														{(currentType) => (
+															<>
+																<FieldShell
+																	label="Klass"
+																	htmlFor={classField.name}
+																>
+																	<Select
+																		value={classField.state.value}
+																		onValueChange={(value) => {
+																			const className =
+																				value as CompetitionFormInput['nosework_class']
+																			classField.handleChange(className)
+																			if (!className) return
+																			const normalized =
+																				normalizeNoseworkTypeForClass(
+																					currentType,
+																					className,
+																				)
+																			if (normalized !== currentType) {
+																				form.setFieldValue(
+																					'nosework_type',
+																					normalized,
+																				)
+																			}
+																		}}
 																	>
-																		{option.label}
-																	</SelectItem>
-																))}
-															</SelectContent>
-														</Select>
-													</FieldShell>
+																		<SelectTrigger
+																			id={classField.name}
+																			className="w-full"
+																		>
+																			<SelectValue placeholder="Välj klass" />
+																		</SelectTrigger>
+																		<SelectContent>
+																			{NOSEWORK_CLASS_OPTIONS.map((option) => (
+																				<SelectItem
+																					key={option.value}
+																					value={option.value}
+																				>
+																					{option.label}
+																				</SelectItem>
+																			))}
+																		</SelectContent>
+																	</Select>
+																</FieldShell>
+
+																<form.Field name="nosework_type">
+																	{(typeField) => {
+																		const typeOptions = classField.state.value
+																			? noseworkTypeOptionsForClass(
+																					classField.state.value,
+																				)
+																			: NOSEWORK_TYPE_OPTIONS
+
+																		return (
+																			<FieldShell
+																				label="Typ"
+																				htmlFor={typeField.name}
+																			>
+																				<Select
+																					value={typeField.state.value}
+																					onValueChange={(value) =>
+																						typeField.handleChange(
+																							value as CompetitionFormInput['nosework_type'],
+																						)
+																					}
+																				>
+																					<SelectTrigger
+																						id={typeField.name}
+																						className="w-full"
+																					>
+																						<SelectValue placeholder="Välj typ" />
+																					</SelectTrigger>
+																					<SelectContent>
+																						{typeOptions.map((option) => (
+																							<SelectItem
+																								key={option.value}
+																								value={option.value}
+																							>
+																								{option.label}
+																							</SelectItem>
+																						))}
+																					</SelectContent>
+																				</Select>
+																			</FieldShell>
+																		)
+																	}}
+																</form.Field>
+															</>
+														)}
+													</form.Subscribe>
 												)}
 											</form.Field>
 											<form.Field name="nosework_official_status">

@@ -317,6 +317,27 @@ pre code {
   border-left: 3px solid var(--palm);
 }
 
+.merit-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.3;
+}
+
+.merit-chip-nosework {
+  background: color-mix(in oklab, var(--lagoon) 14%, var(--surface));
+  color: color-mix(in oklab, var(--lagoon-deep) 88%, black 12%);
+}
+
+.merit-chip-rally {
+  background: color-mix(in oklab, var(--signal) 14%, var(--surface));
+  color: color-mix(in oklab, var(--signal) 88%, black 12%);
+}
+
 .feature-card {
   background:
     linear-gradient(120deg, transparent 0 74%, color-mix(in oklab, var(--signal) 16%, transparent) 74.2% 75.2%, transparent 75.4%),

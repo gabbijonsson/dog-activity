@@ -4,6 +4,7 @@ import {
 	entryRequiresDogHandler,
 	hasEntryParticipants,
 } from '#/lib/entry-validation.ts'
+import { isValidNoseworkTypeForClass } from '#/lib/nosework-rules.ts'
 
 /**
  * Shared Zod schemas for TanStack Form and server validation.
@@ -132,6 +133,17 @@ export const competitionFormSchema = z
 					path: ['nosework_official_status'],
 				})
 			}
+			if (
+				data.nosework_type &&
+				data.nosework_class &&
+				!isValidNoseworkTypeForClass(data.nosework_type, data.nosework_class)
+			) {
+				ctx.addIssue({
+					code: 'custom',
+					message: 'Elit har endast TSM',
+					path: ['nosework_type'],
+				})
+			}
 		}
 
 		if (data.sport === 'rally_obedience') {
@@ -195,6 +207,17 @@ export const competitionSaveSchema = z
 					code: 'custom',
 					message: 'Nose Work-fält saknas',
 					path: ['sport'],
+				})
+			}
+			if (
+				data.nosework_type &&
+				data.nosework_class &&
+				!isValidNoseworkTypeForClass(data.nosework_type, data.nosework_class)
+			) {
+				ctx.addIssue({
+					code: 'custom',
+					message: 'Elit har endast TSM',
+					path: ['nosework_type'],
 				})
 			}
 		}

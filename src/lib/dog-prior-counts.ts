@@ -1,18 +1,13 @@
-import {
-	NOSEWORK_CLASS_OPTIONS,
-	NOSEWORK_TYPE_OPTIONS,
-	RALLY_LEVEL_OPTIONS,
-} from '#/lib/competition-labels.ts'
+import { RALLY_LEVEL_OPTIONS } from '#/lib/competition-labels.ts'
+import { noseworkPriorCountCombinations } from '#/lib/nosework-rules.ts'
 import type { DogInput } from '#/lib/schemas.ts'
 
 export function emptyPriorNoseworkDiplomas(): DogInput['prior_nosework_diplomas'] {
-	return NOSEWORK_TYPE_OPTIONS.flatMap((typeOption) =>
-		NOSEWORK_CLASS_OPTIONS.map((classOption) => ({
-			type: typeOption.value,
-			class: classOption.value,
-			count: 0,
-		})),
-	)
+	return noseworkPriorCountCombinations().map(({ type, class: className }) => ({
+		type,
+		class: className,
+		count: 0,
+	}))
 }
 
 export function emptyPriorRallyQualified(): DogInput['prior_rally_qualified'] {
@@ -23,7 +18,11 @@ export function emptyPriorRallyQualified(): DogInput['prior_rally_qualified'] {
 }
 
 export function mergePriorNoseworkDiplomas(
-	existing: DogInput['prior_nosework_diplomas'],
+	existing: ReadonlyArray<{
+		type: DogInput['prior_nosework_diplomas'][number]['type']
+		class: DogInput['prior_nosework_diplomas'][number]['class']
+		count: number
+	}>,
 ): DogInput['prior_nosework_diplomas'] {
 	const byKey = new Map(
 		existing.map((row) => [`${row.type}:${row.class}`, row.count]),
@@ -36,7 +35,10 @@ export function mergePriorNoseworkDiplomas(
 }
 
 export function mergePriorRallyQualified(
-	existing: DogInput['prior_rally_qualified'],
+	existing: ReadonlyArray<{
+		level: DogInput['prior_rally_qualified'][number]['level']
+		count: number
+	}>,
 ): DogInput['prior_rally_qualified'] {
 	const byLevel = new Map(existing.map((row) => [row.level, row.count]))
 

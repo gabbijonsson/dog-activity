@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react'
 
 import { DogDetailDrawer } from '#/components/dogs/dog-detail-drawer.tsx'
 import { DogFormDrawer } from '#/components/dogs/dog-form-drawer.tsx'
-import { DogsTable } from '#/components/dogs/dogs-table.tsx'
+import { DogsCards } from '#/components/dogs/dogs-cards.tsx'
 import { Button } from '#/components/ui/button.tsx'
 
 import { pageTitle } from '#/lib/page-meta.ts'
@@ -65,7 +65,7 @@ function DogsPage() {
 					</Button>
 				</div>
 
-				<DogsTable onDogSelect={handleDogSelect} />
+				<DogsCards onDogSelect={handleDogSelect} />
 			</section>
 
 			<DogDetailDrawer
