@@ -3,11 +3,9 @@ import { ExternalLink, Pencil, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
+import { CompetitionEntriesSection } from '#/components/competitions/competition-entries-section.tsx'
 import { CompetitionStatusBadge } from '#/components/competitions/competition-status-badge.tsx'
-import {
-	EmptyState,
-	SectionSkeleton,
-} from '#/components/dashboard/dashboard-primitives.tsx'
+import { SectionSkeleton } from '#/components/dashboard/dashboard-primitives.tsx'
 import { CompetitionLocationSection } from '#/components/map/competition-map.tsx'
 import {
 	AlertDialog,
@@ -44,7 +42,6 @@ import {
 	fetchCompetitionById,
 } from '#/lib/competition-queries.ts'
 import { formatDisplayDate, formatDisplayDateTime } from '#/lib/dates.ts'
-import { entryStatusLabel } from '#/lib/entries.ts'
 import { queryKeys } from '#/lib/queryKeys.ts'
 import { sportLabel } from '#/lib/sports.ts'
 import { getBrowserSupabase } from '#/lib/supabase.ts'
@@ -248,36 +245,12 @@ export function CompetitionDetailDrawer({
 								</ul>
 							</section>
 
-							<section>
-								<h3 className="island-kicker mb-3">Anmälningar</h3>
-								{competition.entries.length === 0 ? (
-									<EmptyState
-										title="Inga anmälningar än"
-										description="Lägg till anmälningar i Epic 7."
-									/>
-								) : (
-									<ul className="divide-y divide-border/60 rounded-lg border border-border/70">
-										{competition.entries.map((entry) => (
-											<li
-												key={entry.id}
-												className="flex flex-col gap-1 px-4 py-3 text-sm"
-											>
-												<span className="font-medium">
-													{entry.dog?.name ?? 'Okänd hund'}
-												</span>
-												<span className="text-xs text-muted-foreground">
-													{entry.handler?.full_name ??
-														entry.handler?.email ??
-														'Okänd handler'}
-												</span>
-												<span className="text-xs font-medium text-[var(--palm)]">
-													{entryStatusLabel(entry.status)}
-												</span>
-											</li>
-										))}
-									</ul>
-								)}
-							</section>
+							<CompetitionEntriesSection
+								key={competition.id}
+								competitionId={competition.id}
+								sport={competition.sport}
+								entries={competition.entries}
+							/>
 
 							{onEdit && (
 								<div className="flex flex-col gap-2 sm:flex-row">

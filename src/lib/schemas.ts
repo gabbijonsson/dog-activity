@@ -105,7 +105,7 @@ export type CompetitionFormInput = z.infer<typeof competitionFormSchema>
 
 export const competitionSaveSchema = z
 	.object({
-		id: z.string().uuid().optional(),
+		id: z.uuid().optional(),
 		name: z.string().trim().min(1, { error: 'Namn krävs' }),
 		sport: sportEnum,
 		location: z.string().trim().min(1, { error: 'Till-adress krävs' }),
@@ -173,3 +173,33 @@ export const competitionSaveSchema = z
 	})
 
 export type CompetitionSaveInput = z.infer<typeof competitionSaveSchema>
+
+const entryStatusEnum = z.enum([
+	'interested',
+	'signed_up',
+	'slot_assigned',
+	'reserve_slot',
+	'paid',
+])
+
+export const entryCreateSchema = z.object({
+	competition_id: z.uuid(),
+	dog_id: z.uuid({ error: 'Välj hund' }),
+	handler_id: z.uuid({ error: 'Välj handler' }),
+	status: entryStatusEnum,
+})
+
+export type EntryCreateInput = z.infer<typeof entryCreateSchema>
+
+export const entryUpdateStatusSchema = z.object({
+	id: z.uuid(),
+	status: entryStatusEnum,
+})
+
+export type EntryUpdateStatusInput = z.infer<typeof entryUpdateStatusSchema>
+
+export const entryDeleteSchema = z.object({
+	id: z.uuid(),
+})
+
+export type EntryDeleteInput = z.infer<typeof entryDeleteSchema>

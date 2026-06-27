@@ -10,6 +10,10 @@ const ENTRY_STATUS_LABELS: Record<EntryStatus, string> = {
 	paid: 'Betald',
 }
 
+export const ENTRY_STATUS_OPTIONS = (
+	Object.entries(ENTRY_STATUS_LABELS) as [EntryStatus, string][]
+).map(([value, label]) => ({ value, label }))
+
 export function entryStatusLabel(status: EntryStatus): string {
 	return ENTRY_STATUS_LABELS[status]
 }

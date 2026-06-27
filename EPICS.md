@@ -117,12 +117,12 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done
 
 ## Epic 7 — Entries
 
-- [ ] Add-entry form inside competition detail drawer: Select dog, Select handler, Select status.
-- [ ] Server-side constraint validation with friendly errors:
+- [x] Add-entry form inside competition detail drawer: Select dog, Select handler, Select status.
+- [x] Server-side constraint validation with friendly errors:
   - NoseWork: reject if dog already entered, or if handler already entered, in this competition.
   - Rally: reject if dog already entered in this competition (handler may repeat with other dogs).
-- [ ] Update entry status; remove entry.
-- [ ] Invalidate competition + dog detail queries on change.
+- [x] Update entry status; remove entry.
+- [x] Invalidate competition + dog detail queries on change.
 
 **Acceptance**: entries respect per-sport uniqueness; status updates persist; counts update on dog list.
 
