@@ -1,5 +1,5 @@
 import { createServerFn } from '@tanstack/react-start'
-
+import { noseworkCountsTowardPromotion } from '#/lib/promotion-tracking.ts'
 import {
 	noseworkEntryResultsSchema,
 	rallyEntryResultsSchema,
@@ -28,11 +28,41 @@ async function requireAuthUser(
 	return user
 }
 
+async function requireOfficialNoseworkEntry(
+	supabase: ReturnType<typeof createServerSupabase>,
+	entryId: string,
+) {
+	const { data, error } = await supabase
+		.from('entries')
+		.select(
+			'competition:competitions!inner(sport, nosework_details(official_status))',
+		)
+		.eq('id', entryId)
+		.single()
+
+	if (error || !data?.competition) {
+		throw new EntryResultsError('Kunde inte hitta tilldelningen')
+	}
+
+	if (data.competition.sport !== 'nosework') return
+
+	if (
+		!noseworkCountsTowardPromotion(
+			data.competition.nosework_details?.official_status,
+		)
+	) {
+		throw new EntryResultsError(
+			'Resultat sparas bara för officiella nose work-tävlingar',
+		)
+	}
+}
+
 export const saveNoseworkEntryResults = createServerFn({ method: 'POST' })
 	.validator(noseworkEntryResultsSchema)
 	.handler(async ({ data }) => {
 		const supabase = createServerSupabase()
 		await requireAuthUser(supabase)
+		await requireOfficialNoseworkEntry(supabase, data.entry_id)
 
 		const { error } = await supabase.from('nosework_entry_results').upsert(
 			{

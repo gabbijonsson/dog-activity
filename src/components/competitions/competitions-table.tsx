@@ -137,8 +137,7 @@ export function CompetitionsTable({
 			{
 				accessorKey: 'location',
 				header: ({ column }) => <SortHeader column={column} label="Till" />,
-				cell: ({ row }) =>
-					formatCompetitionCity(row.original.location) ?? '—',
+				cell: ({ row }) => formatCompetitionCity(row.original.location) ?? '—',
 			},
 			{
 				id: 'logistik',

@@ -2,6 +2,8 @@ import type { Database } from '#/lib/database.types.ts'
 
 type NoseworkType = Database['public']['Enums']['nosework_type']
 type NoseworkClass = Database['public']['Enums']['nosework_class']
+type NoseworkOfficialStatus =
+	Database['public']['Enums']['nosework_official_status']
 type RallyLevel = Database['public']['Enums']['rally_level']
 
 export const RALLY_QUALIFICATION_THRESHOLDS: Record<RallyLevel, number> = {
@@ -13,6 +15,12 @@ export const RALLY_QUALIFICATION_THRESHOLDS: Record<RallyLevel, number> = {
 
 export const PROMOTION_DIPLOMA_LIMIT = 3
 export const PROMOTION_RALLY_QUALIFIED_LIMIT = 3
+
+export function noseworkCountsTowardPromotion(
+	officialStatus: NoseworkOfficialStatus | null | undefined,
+): boolean {
+	return officialStatus === 'official'
+}
 
 export type DogNoseworkDiplomaCount = {
 	dog_id: string

@@ -242,6 +242,9 @@ export function CompetitionDetailDrawer({
 								entries={competition.entries}
 								noseworkType={competition.nosework_details?.type}
 								noseworkClass={competition.nosework_details?.class}
+								noseworkOfficialStatus={
+									competition.nosework_details?.official_status
+								}
 								rallyLevel={competition.rally_details?.level}
 								numberOfStarts={competition.rally_details?.number_of_starts}
 							/>

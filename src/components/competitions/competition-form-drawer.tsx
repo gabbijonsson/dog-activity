@@ -39,25 +39,26 @@ import {
 	SPORT_OPTIONS,
 } from '#/lib/competition-labels.ts'
 import {
-	normalizeNoseworkTypeForClass,
-	noseworkTypeOptionsForClass,
-} from '#/lib/nosework-rules.ts'
-import {
 	competitionToFormInput,
 	fetchCompetitionById,
 	formInputToSavePayload,
 } from '#/lib/competition-queries.ts'
-import { fetchDogsList } from '#/lib/dog-queries.ts'
 import {
 	buildDogPromotionWarnings,
 	promotionWarningForDog,
 } from '#/lib/dog-promotion-warnings.ts'
+import { fetchDogsList } from '#/lib/dog-queries.ts'
 import {
 	entryRequiresDogHandler,
 	hasEntryParticipants,
 } from '#/lib/entry-validation.ts'
+import {
+	normalizeNoseworkTypeForClass,
+	noseworkTypeOptionsForClass,
+} from '#/lib/nosework-rules.ts'
 import { fetchProfilesList } from '#/lib/profile-queries.ts'
 import { fetchPromotionContext } from '#/lib/promotion-queries.ts'
+import { noseworkCountsTowardPromotion } from '#/lib/promotion-tracking.ts'
 import { queryKeys } from '#/lib/queryKeys.ts'
 import {
 	type CompetitionFormInput,
@@ -648,22 +649,35 @@ export function CompetitionFormDrawer({
 											sport: state.values.sport,
 											noseworkType: state.values.nosework_type,
 											noseworkClass: state.values.nosework_class,
+											noseworkOfficialStatus:
+												state.values.nosework_official_status,
 											rallyLevel: state.values.rally_level,
 										})}
 									>
-										{({ sport, noseworkType, noseworkClass, rallyLevel }) => {
-											const dogPromotionWarnings = promotionContext
-												? buildDogPromotionWarnings(
-														dogs,
-														sport,
-														promotionContext,
-														{
-															noseworkType,
-															noseworkClass,
-															rallyLevel,
-														},
-													)
-												: new Map<string, string>()
+										{({
+											sport,
+											noseworkType,
+											noseworkClass,
+											noseworkOfficialStatus,
+											rallyLevel,
+										}) => {
+											const trackResults =
+												sport === 'rally_obedience' ||
+												noseworkCountsTowardPromotion(noseworkOfficialStatus)
+
+											const dogPromotionWarnings =
+												promotionContext && trackResults
+													? buildDogPromotionWarnings(
+															dogs,
+															sport,
+															promotionContext,
+															{
+																noseworkType,
+																noseworkClass,
+																rallyLevel,
+															},
+														)
+													: new Map<string, string>()
 
 											return (
 												<form.Field name="entry_dog_id">

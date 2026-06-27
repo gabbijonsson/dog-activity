@@ -5,6 +5,7 @@ import {
 	type DogNoseworkDiplomaCount,
 	type DogRallyQualifiedCount,
 	isRallyStartQualified,
+	noseworkCountsTowardPromotion,
 } from '#/lib/promotion-tracking.ts'
 import type { TypedSupabaseClient } from '#/lib/supabase.ts'
 
@@ -31,7 +32,7 @@ export async function fetchPromotionContext(
 		supabase
 			.from('nosework_entry_results')
 			.select(
-				'diploma_result, entry:entries!inner(dog_id, competition:competitions!inner(nosework_details(type, class)))',
+				'diploma_result, entry:entries!inner(dog_id, competition:competitions!inner(nosework_details(type, class, official_status)))',
 			)
 			.eq('diploma_result', 'diplom'),
 		supabase
@@ -72,6 +73,7 @@ type NoseworkResultRow = {
 			nosework_details: {
 				type: Database['public']['Enums']['nosework_type']
 				class: Database['public']['Enums']['nosework_class']
+				official_status: Database['public']['Enums']['nosework_official_status']
 			} | null
 		} | null
 	} | null
@@ -97,6 +99,7 @@ function mapAppNoseworkDiplomas(
 		const dogId = row.entry?.dog_id
 		const details = row.entry?.competition?.nosework_details
 		if (!dogId || !details) return []
+		if (!noseworkCountsTowardPromotion(details.official_status)) return []
 		return [{ dog_id: dogId, type: details.type, class: details.class }]
 	})
 }

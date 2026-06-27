@@ -33,6 +33,7 @@ import {
 import { entryRequiresDogHandler } from '#/lib/entry-validation.ts'
 import { fetchProfilesList } from '#/lib/profile-queries.ts'
 import { fetchPromotionContext } from '#/lib/promotion-queries.ts'
+import { noseworkCountsTowardPromotion } from '#/lib/promotion-tracking.ts'
 import { queryKeys } from '#/lib/queryKeys.ts'
 import { type EntryCreateInput, entryCreateSchema } from '#/lib/schemas.ts'
 import { getBrowserSupabase } from '#/lib/supabase.ts'
@@ -48,6 +49,8 @@ type Sport = Database['public']['Enums']['sport']
 type EntryStatus = Database['public']['Enums']['entry_status']
 type NoseworkType = Database['public']['Enums']['nosework_type']
 type NoseworkClass = Database['public']['Enums']['nosework_class']
+type NoseworkOfficialStatus =
+	Database['public']['Enums']['nosework_official_status']
 type RallyLevel = Database['public']['Enums']['rally_level']
 type RallyStarts = Database['public']['Enums']['rally_starts']
 
@@ -65,6 +68,7 @@ interface CompetitionEntriesSectionProps {
 	entries: CompetitionEntry[]
 	noseworkType?: NoseworkType | null
 	noseworkClass?: NoseworkClass | null
+	noseworkOfficialStatus?: NoseworkOfficialStatus | null
 	rallyLevel?: RallyLevel | null
 	numberOfStarts?: RallyStarts | null
 }
@@ -117,6 +121,7 @@ export function CompetitionEntriesSection({
 	entries,
 	noseworkType,
 	noseworkClass,
+	noseworkOfficialStatus,
 	rallyLevel,
 	numberOfStarts,
 }: CompetitionEntriesSectionProps) {
@@ -148,13 +153,18 @@ export function CompetitionEntriesSection({
 		},
 	})
 
-	const dogPromotionWarnings = promotionContext
-		? buildDogPromotionWarnings(dogs, sport, promotionContext, {
-				noseworkType,
-				noseworkClass,
-				rallyLevel,
-			})
-		: new Map<string, string>()
+	const trackResults =
+		sport === 'rally_obedience' ||
+		noseworkCountsTowardPromotion(noseworkOfficialStatus)
+
+	const dogPromotionWarnings =
+		promotionContext && trackResults
+			? buildDogPromotionWarnings(dogs, sport, promotionContext, {
+					noseworkType,
+					noseworkClass,
+					rallyLevel,
+				})
+			: new Map<string, string>()
 
 	const enteredDogIds = new Set(
 		entries.flatMap((entry) => (entry.dog_id ? [entry.dog_id] : [])),
@@ -375,14 +385,16 @@ export function CompetitionEntriesSection({
 													entry.dog_id ?? '',
 												)}
 											/>
-											<EntryResultsFields
-												competitionId={competitionId}
-												sport={sport}
-												entry={entry}
-												numberOfStarts={numberOfStarts}
-												rallyLevel={rallyLevel}
-												disabled={isUpdating}
-											/>
+											{trackResults ? (
+												<EntryResultsFields
+													competitionId={competitionId}
+													sport={sport}
+													entry={entry}
+													numberOfStarts={numberOfStarts}
+													rallyLevel={rallyLevel}
+													disabled={isUpdating}
+												/>
+											) : null}
 										</div>
 										<Button
 											type="button"
