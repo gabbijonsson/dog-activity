@@ -10,7 +10,8 @@ const STATUS_STYLES: Record<CompetitionStatus, string> = {
 		'bg-[color-mix(in_oklab,var(--lagoon)_16%,transparent)] text-[var(--lagoon-deep)]',
 	reserve_slot: 'bg-reserve text-reserve-deep',
 	registered:
-		'bg-[color-mix(in_oklab,var(--palm)_18%,transparent)] text-[var(--palm)]',
+		'bg-[color-mix(in_oklab,var(--lagoon)_12%,transparent)] text-[var(--lagoon-deep)]',
+	paid: 'bg-[color-mix(in_oklab,var(--palm)_18%,transparent)] text-[var(--palm)]',
 }
 
 export function CompetitionStatusBadge({

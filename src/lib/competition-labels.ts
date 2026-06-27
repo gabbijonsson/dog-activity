@@ -19,6 +19,7 @@ export type CompetitionStatus =
 	| 'in_progress'
 	| 'reserve_slot'
 	| 'registered'
+	| 'paid'
 
 const NOSEWORK_TYPE_LABELS: Record<NoseworkType, string> = {
 	tsm: 'TSM',
@@ -73,9 +74,17 @@ const COMPETITION_STATUS_LABELS: Record<CompetitionStatus, string> = {
 	in_progress: 'Pågår',
 	reserve_slot: 'Reserv',
 	registered: 'Anmäld',
+	paid: 'Betald',
 }
 
-const REGISTERED_STATUSES = new Set<EntryStatus>(['signed_up', 'paid'])
+const COMPETITION_STATUS_PRIORITY: Record<CompetitionStatus, number> = {
+	empty: -1,
+	in_progress: 0,
+	interested: 1,
+	reserve_slot: 2,
+	registered: 3,
+	paid: 4,
+}
 
 export function noseworkTypeLabel(type: NoseworkType): string {
 	return NOSEWORK_TYPE_LABELS[type]
@@ -131,20 +140,37 @@ export function competitionStatusLabel(status: CompetitionStatus): string {
 	return COMPETITION_STATUS_LABELS[status]
 }
 
+function entryStatusToCompetitionStatus(
+	status: EntryStatus,
+): CompetitionStatus {
+	switch (status) {
+		case 'paid':
+			return 'paid'
+		case 'signed_up':
+			return 'registered'
+		case 'reserve_slot':
+			return 'reserve_slot'
+		case 'interested':
+			return 'interested'
+		default:
+			return 'in_progress'
+	}
+}
+
 export function deriveCompetitionStatus(
 	entries: Pick<{ status: EntryStatus }, 'status'>[],
 ): CompetitionStatus {
 	if (entries.length === 0) return 'empty'
-	if (entries.every((entry) => REGISTERED_STATUSES.has(entry.status))) {
-		return 'registered'
-	}
 	if (entries.every((entry) => entry.status === 'interested')) {
 		return 'interested'
 	}
-	if (entries.some((entry) => entry.status === 'reserve_slot')) {
-		return 'reserve_slot'
-	}
-	return 'in_progress'
+
+	return entries.reduce<CompetitionStatus>((best, entry) => {
+		const next = entryStatusToCompetitionStatus(entry.status)
+		return COMPETITION_STATUS_PRIORITY[next] > COMPETITION_STATUS_PRIORITY[best]
+			? next
+			: best
+	}, 'in_progress')
 }
 
 export const NOSEWORK_TYPE_OPTIONS = Object.entries(NOSEWORK_TYPE_LABELS).map(

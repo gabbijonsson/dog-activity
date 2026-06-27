@@ -51,10 +51,24 @@ export type CompetitionListItem = Competition & {
 		Database['public']['Tables']['rally_details']['Row'],
 		'number_of_starts' | 'level'
 	> | null
-	entries: Pick<
+	entries: (Pick<
 		Database['public']['Tables']['entries']['Row'],
 		'id' | 'status'
-	>[]
+	> & {
+		nosework_results: Pick<
+			Database['public']['Tables']['nosework_entry_results']['Row'],
+			| 'diploma_result'
+			| 'total_placement'
+			| 'search_1_placement'
+			| 'search_2_placement'
+			| 'search_3_placement'
+			| 'search_4_placement'
+		> | null
+		rally_start_results: Pick<
+			Database['public']['Tables']['rally_start_results']['Row'],
+			'start_number' | 'points'
+		>[]
+	})[]
 	status: ReturnType<typeof deriveCompetitionStatus>
 }
 
@@ -142,7 +156,7 @@ export async function fetchCompetitionsList(
 	const { data, error } = await supabase
 		.from('competitions')
 		.select(
-			'*, nosework_details(type), rally_details(number_of_starts, level), entries(id, status)',
+			'*, nosework_details(type), rally_details(number_of_starts, level), entries(id, status, nosework_results:nosework_entry_results(diploma_result, total_placement, search_1_placement, search_2_placement, search_3_placement, search_4_placement), rally_start_results(start_number, points))',
 		)
 		.order('event_date', { ascending: true })
 

@@ -368,6 +368,65 @@ a {
   color: var(--kicker);
 }
 
+.startlist-tabs {
+  display: inline-flex;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border: 1px solid var(--line);
+  border-radius: calc(var(--radius) + 2px);
+  background:
+    linear-gradient(165deg, color-mix(in oklab, var(--surface-strong) 92%, white 8%), var(--surface));
+  box-shadow: 0 1px 0 var(--inset-glint) inset;
+}
+
+.startlist-tab {
+  position: relative;
+  border: 0;
+  border-radius: var(--radius);
+  padding: 0.45rem 0.95rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--sea-ink-soft);
+  background: transparent;
+  cursor: pointer;
+}
+
+.startlist-tab:hover {
+  color: var(--sea-ink);
+  background: color-mix(in oklab, var(--link-bg-hover) 70%, transparent);
+}
+
+.startlist-tab.is-active {
+  color: var(--sea-ink);
+  background:
+    linear-gradient(135deg, color-mix(in oklab, var(--lagoon) 18%, white 82%), color-mix(in oklab, var(--surface-strong) 88%, white 12%));
+  box-shadow:
+    0 1px 0 var(--inset-glint) inset,
+    0 4px 12px rgba(0, 109, 229, 0.12);
+}
+
+.startlist-tab-count {
+  margin-left: 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: color-mix(in oklab, var(--kicker) 78%, var(--sea-ink-soft));
+}
+
+.startlist-tab.is-active .startlist-tab-count {
+  color: var(--lagoon-deep);
+}
+
+.results-missing {
+  color: var(--sea-ink-soft);
+  font-style: italic;
+}
+
+.results-recorded {
+  color: color-mix(in oklab, var(--palm) 88%, var(--sea-ink) 12%);
+  font-weight: 600;
+}
+
 .nav-link {
   position: relative;
   text-decoration: none;
