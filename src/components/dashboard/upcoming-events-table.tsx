@@ -76,15 +76,10 @@ export function UpcomingEventsTable({
 								<div className="flex flex-wrap items-center gap-2 sm:contents">
 									<span
 										className={cn(
-											'inline-flex w-fit items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-semibold',
-											'bg-muted/70',
-											config.textClass,
+											'text-black inline-flex w-fit items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-semibold',
+											config.dotClass,
 										)}
 									>
-										<span
-											className={cn('size-1.5 rounded-full', config.dotClass)}
-											aria-hidden="true"
-										/>
 										{config.label}
 									</span>
 									<span className="text-xs text-muted-foreground sm:order-none">

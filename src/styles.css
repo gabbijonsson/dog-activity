@@ -52,10 +52,10 @@
   --ring: oklch(0.63 0.2 226);
 
   /* dashboard calendar event colors */
-  --event-sign-up-open: oklch(0.67 0.19 224);
-  --event-sign-up-close: oklch(0.78 0.18 74);
-  --event-payment: oklch(0.64 0.23 32);
-  --event-day: oklch(0.63 0.16 165);
+  --event-sign-up-open: #d2b8fc;
+  --event-sign-up-close: #b8d1fc;
+  --event-payment: #fcb8cd;
+  --event-day: #b8f3fc;
   --chart-1: oklch(0.63 0.23 257);
   --chart-2: oklch(0.72 0.18 185);
   --chart-3: oklch(0.78 0.18 74);

@@ -349,7 +349,7 @@ function CalendarDayWithEvents({
 								key={event.id}
 								title={displayTitle}
 								className={cn(
-									'block w-full truncate rounded-sm px-1 py-px text-left text-[0.625rem] leading-snug font-medium text-white',
+									'block w-full truncate rounded-sm px-1 py-px text-left text-[0.75rem] leading-snug font-medium text-black',
 									config.dotClass,
 									modifiers.outside && 'opacity-60',
 								)}
