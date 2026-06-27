@@ -46,8 +46,9 @@ import {
 	type CompetitionListItem,
 	fetchCompetitionsList,
 } from '#/lib/competition-queries.ts'
-import { formatDisplayDateTime } from '#/lib/dates.ts'
+import { formatDisplayDateWithWeekday } from '#/lib/dates.ts'
 import { formatLogistik } from '#/lib/logistik.ts'
+import { cityFromAddress } from '#/lib/location.ts'
 import { queryKeys } from '#/lib/queryKeys.ts'
 import { sportLabel } from '#/lib/sports.ts'
 import { getBrowserSupabase } from '#/lib/supabase.ts'
@@ -130,12 +131,14 @@ export function CompetitionsTable({
 				header: ({ column }) => (
 					<SortHeader column={column} label="Tävlingsdag" />
 				),
-				cell: ({ row }) => formatDisplayDateTime(row.original.event_date),
+				cell: ({ row }) =>
+					formatDisplayDateWithWeekday(row.original.event_date),
 			},
 			{
 				accessorKey: 'location',
 				header: ({ column }) => <SortHeader column={column} label="Till" />,
-				cell: ({ row }) => row.original.location ?? '—',
+				cell: ({ row }) =>
+					formatCompetitionCity(row.original.location) ?? '—',
 			},
 			{
 				id: 'logistik',
@@ -312,6 +315,7 @@ export function CompetitionsTable({
 					<ul className="space-y-3">
 						{filteredRows.map((row) => {
 							const competition = row.original
+							const city = formatCompetitionCity(competition.location)
 							const accentClass =
 								competition.sport === 'nosework'
 									? 'record-card-accent-nosework'
@@ -332,7 +336,7 @@ export function CompetitionsTable({
 										</div>
 										<p className="mt-2 text-xs font-semibold text-primary tabular-nums">
 											<time dateTime={competition.event_date}>
-												{formatDisplayDateTime(competition.event_date)}
+												{formatDisplayDateWithWeekday(competition.event_date)}
 											</time>
 										</p>
 										<p className="mt-1 text-xs text-muted-foreground">
@@ -344,15 +348,13 @@ export function CompetitionsTable({
 													competition.rally_details?.number_of_starts,
 											})}
 										</p>
-										{competition.location ? (
+										{city ? (
 											<p className="mt-2 flex items-start gap-1.5 text-xs text-muted-foreground">
 												<MapPin
 													className="mt-0.5 size-3.5 shrink-0"
 													aria-hidden="true"
 												/>
-												<span className="line-clamp-2">
-													{competition.location}
-												</span>
+												<span className="line-clamp-2">{city}</span>
 											</p>
 										) : null}
 										{formatLogistik({
@@ -454,6 +456,11 @@ export function CompetitionsTable({
 			</div>
 		</div>
 	)
+}
+
+function formatCompetitionCity(location: string | null | undefined) {
+	if (!location) return null
+	return cityFromAddress(location)
 }
 
 const searchFilterFn: FilterFn<CompetitionListItem> = (

@@ -9,6 +9,7 @@ import {
 	startOfDay,
 	startOfMonth,
 } from 'date-fns'
+import { sv } from 'date-fns/locale'
 
 /** ISO datetime string for the current moment. */
 export function nowIso(): string {
@@ -41,6 +42,14 @@ export function paymentDeadlineFromDate(dateString: string): string {
 
 export function formatDisplayDate(iso: string): string {
 	return format(parseISO(iso), 'yyyy-MM-dd')
+}
+
+export function formatDisplayDateWithWeekday(iso: string): string {
+	const parsed = parseISO(iso)
+	const date = format(parsed, 'yyyy-MM-dd')
+	const weekday = format(parsed, 'EEEE', { locale: sv })
+	const weekdayLabel = weekday.charAt(0).toUpperCase() + weekday.slice(1)
+	return `${date} • ${weekdayLabel}`
 }
 
 export function formatDisplayDateTime(iso: string): string {
