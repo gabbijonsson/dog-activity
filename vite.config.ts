@@ -1,6 +1,7 @@
 import tailwindcss from '@tailwindcss/vite'
 import { devtools } from '@tanstack/devtools-vite'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
+import { nitro } from 'nitro/vite'
 import viteReact from '@vitejs/plugin-react'
 import { defineConfig, loadEnv } from 'vite'
 
@@ -16,7 +17,7 @@ export default defineConfig(({ mode }) => {
 
 	return {
 		resolve: { tsconfigPaths: true },
-		plugins: [devtools(), tailwindcss(), tanstackStart(), viteReact()],
+		plugins: [devtools(), tailwindcss(), tanstackStart(), nitro(), viteReact()],
 		define: Object.fromEntries(
 			Object.entries(viteEnv).map(([key, value]) => [
 				`import.meta.env.${key}`,
