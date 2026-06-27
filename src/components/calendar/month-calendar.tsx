@@ -14,9 +14,9 @@ import { CalendarPlus } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import {
 	ErrorState,
-	EventTypeLegend,
 	SectionSkeleton,
 } from '#/components/dashboard/dashboard-primitives.tsx'
+import { EventTypeLegend } from '#/components/dashboard/event-type-legend.tsx'
 import { Button } from '#/components/ui/button.tsx'
 import { Calendar, CalendarDayButton } from '#/components/ui/calendar.tsx'
 import {
@@ -28,6 +28,7 @@ import {
 } from '#/components/ui/popover.tsx'
 import {
 	CALENDAR_EVENT_CONFIG,
+	type CalendarEventType,
 	calendarEventDisplayTitle,
 } from '#/lib/calendar-events.ts'
 import {
@@ -61,6 +62,9 @@ export function MonthCalendar({
 	const [popoverDay, setPopoverDay] = useState<Date | undefined>()
 	const [popoverOpen, setPopoverOpen] = useState(false)
 	const [mounted, setMounted] = useState(false)
+	const [selectedEventTypes, setSelectedEventTypes] = useState<
+		CalendarEventType[]
+	>([])
 
 	useEffect(() => {
 		setMounted(true)
@@ -81,16 +85,22 @@ export function MonthCalendar({
 		},
 	})
 
+	const filteredEvents = useMemo(() => {
+		if (selectedEventTypes.length === 0) return events
+		const selected = new Set(selectedEventTypes)
+		return events.filter((event) => selected.has(event.event_type))
+	}, [events, selectedEventTypes])
+
 	const eventsByDate = useMemo(() => {
 		const map = new Map<string, CalendarEventWithCompetition[]>()
-		for (const event of events) {
+		for (const event of filteredEvents) {
 			const dayKey = toLocalDateString(event.event_date)
 			const existing = map.get(dayKey) ?? []
 			existing.push(event)
 			map.set(dayKey, existing)
 		}
 		return map
-	}, [events])
+	}, [filteredEvents])
 
 	const popoverDayEvents = useMemo(() => {
 		if (!popoverDay) return []
@@ -98,9 +108,17 @@ export function MonthCalendar({
 	}, [eventsByDate, popoverDay])
 
 	const daysWithEvents = useMemo(
-		() => events.map((event) => parseISO(event.event_date)),
-		[events],
+		() => filteredEvents.map((event) => parseISO(event.event_date)),
+		[filteredEvents],
 	)
+
+	function toggleEventType(type: CalendarEventType) {
+		setSelectedEventTypes((current) =>
+			current.includes(type)
+				? current.filter((item) => item !== type)
+				: [...current, type],
+		)
+	}
 
 	const handleAddCompetition = (date: Date) => {
 		onAddCompetition?.(date)
@@ -129,7 +147,11 @@ export function MonthCalendar({
 						Idag
 					</Button>
 				</div>
-				<EventTypeLegend />
+				<EventTypeLegend
+					selectedTypes={selectedEventTypes}
+					onToggleType={toggleEventType}
+					onClear={() => setSelectedEventTypes([])}
+				/>
 			</div>
 
 			{isLoading ? (

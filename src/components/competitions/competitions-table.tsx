@@ -22,12 +22,9 @@ import {
 import { Button } from '#/components/ui/button.tsx'
 import { Input } from '#/components/ui/input.tsx'
 import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from '#/components/ui/select.tsx'
+	MultiSelectFilter,
+	type MultiSelectFilterOption,
+} from '#/components/ui/multi-select-filter.tsx'
 import {
 	Table,
 	TableBody,
@@ -40,6 +37,7 @@ import { activateOnKeyboard } from '#/lib/a11y.ts'
 import {
 	COMPETITION_STATUS_OPTIONS,
 	COMPETITION_TYPE_FILTER_OPTIONS,
+	SPORT_OPTIONS,
 	competitionTypeLabel,
 } from '#/lib/competition-labels.ts'
 import {
@@ -58,8 +56,10 @@ import {
 } from '#/lib/dates.ts'
 import { cityFromAddress } from '#/lib/location.ts'
 import { formatLogistik } from '#/lib/logistik.ts'
+import { profileDisplayName } from '#/lib/profile-queries.ts'
 import { queryKeys } from '#/lib/queryKeys.ts'
 import { sportLabel } from '#/lib/sports.ts'
+import { readMultiSelectFilter } from '#/lib/table-filters.ts'
 import { getBrowserSupabase } from '#/lib/supabase.ts'
 import { cn } from '#/lib/utils.ts'
 
@@ -70,6 +70,11 @@ interface CompetitionsTableProps {
 }
 
 type CompetitionTab = 'upcoming' | 'past'
+
+const RESULTS_FILTER_OPTIONS: MultiSelectFilterOption[] = [
+	{ value: 'has_results', label: 'Har resultat' },
+	{ value: 'missing_results', label: 'Saknar resultat' },
+]
 
 export function CompetitionsTable({
 	onCompetitionSelect,
@@ -115,6 +120,20 @@ export function CompetitionsTable({
 	const tabData =
 		activeTab === 'upcoming' ? upcomingCompetitions : pastCompetitions
 
+	const handlerFilterOptions = useMemo(() => {
+		const handlers = new Map<string, string>()
+		for (const competition of tabData) {
+			for (const entry of competition.entries) {
+				if (!entry.handler_id || !entry.handler) continue
+				handlers.set(entry.handler_id, profileDisplayName(entry.handler))
+			}
+		}
+
+		return [...handlers.entries()]
+			.map(([value, label]) => ({ value, label }))
+			.sort((a, b) => a.label.localeCompare(b.label, 'sv'))
+	}, [tabData])
+
 	useEffect(() => {
 		setColumnFilters([])
 		setGlobalFilter('')
@@ -145,7 +164,7 @@ export function CompetitionsTable({
 				accessorKey: 'sport',
 				header: ({ column }) => <SortHeader column={column} label="Sport" />,
 				cell: ({ row }) => sportLabel(row.original.sport),
-				filterFn: 'equals',
+				filterFn: multiSelectFilterFn,
 			},
 			{
 				id: 'type',
@@ -161,7 +180,21 @@ export function CompetitionsTable({
 						noseworkType: row.original.nosework_details?.type,
 						rallyStarts: row.original.rally_details?.number_of_starts,
 					}),
-				filterFn: 'equals',
+				filterFn: multiSelectFilterFn,
+			},
+			{
+				id: 'handler',
+				accessorFn: (row) => competitionHandlerIds(row.entries),
+				header: ({ column }) => (
+					<SortHeader column={column} label="Hundförare" />
+				),
+				cell: ({ row }) => formatCompetitionHandlers(row.original.entries),
+				filterFn: multiSelectFilterFn,
+				sortingFn: (rowA, rowB) =>
+					formatCompetitionHandlers(rowA.original.entries).localeCompare(
+						formatCompetitionHandlers(rowB.original.entries),
+						'sv',
+					),
 			},
 			{
 				accessorKey: 'event_date',
@@ -199,7 +232,7 @@ export function CompetitionsTable({
 							</span>
 						)
 					},
-					filterFn: 'equals',
+					filterFn: multiSelectFilterFn,
 				},
 				{
 					id: 'actions',
@@ -238,7 +271,7 @@ export function CompetitionsTable({
 				cell: ({ row }) => (
 					<CompetitionStatusBadge status={row.original.status} />
 				),
-				filterFn: 'equals',
+				filterFn: multiSelectFilterFn,
 			},
 			{
 				id: 'actions',
@@ -267,21 +300,27 @@ export function CompetitionsTable({
 		getFilteredRowModel: getFilteredRowModel(),
 	})
 
-	const sportFilter =
-		(table.getColumn('sport')?.getFilterValue() as string | undefined) ?? 'all'
-	const typeFilter =
-		(table.getColumn('type')?.getFilterValue() as string | undefined) ?? 'all'
-	const statusFilter =
-		(table.getColumn('status')?.getFilterValue() as string | undefined) ?? 'all'
-	const resultsFilter =
-		(table.getColumn('results')?.getFilterValue() as string | undefined) ??
-		'all'
+	const sportFilter = readMultiSelectFilter(
+		table.getColumn('sport')?.getFilterValue(),
+	)
+	const typeFilter = readMultiSelectFilter(
+		table.getColumn('type')?.getFilterValue(),
+	)
+	const handlerFilter = readMultiSelectFilter(
+		table.getColumn('handler')?.getFilterValue(),
+	)
+	const statusFilter = readMultiSelectFilter(
+		table.getColumn('status')?.getFilterValue(),
+	)
+	const resultsFilter = readMultiSelectFilter(
+		table.getColumn('results')?.getFilterValue(),
+	)
 	const filteredRows = table.getRowModel().rows
 
-	function setColumnFilter(columnId: string, value: string) {
+	function setColumnFilter(columnId: string, values: string[]) {
 		table
 			.getColumn(columnId)
-			?.setFilterValue(value === 'all' ? undefined : value)
+			?.setFilterValue(values.length > 0 ? values : undefined)
 	}
 
 	if (isLoading) {
@@ -362,65 +401,45 @@ export function CompetitionsTable({
 						onChange={(event) => setGlobalFilter(event.target.value)}
 						className="max-w-sm bg-background"
 					/>
-					<Select
-						value={sportFilter}
-						onValueChange={(value) => setColumnFilter('sport', value)}
-					>
-						<SelectTrigger className="w-full max-w-[180px] bg-background">
-							<SelectValue placeholder="Alla sporter" />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value="all">Alla sporter</SelectItem>
-							<SelectItem value="nosework">Nose Work</SelectItem>
-							<SelectItem value="rally_obedience">Rally</SelectItem>
-						</SelectContent>
-					</Select>
-					<Select
-						value={typeFilter}
-						onValueChange={(value) => setColumnFilter('type', value)}
-					>
-						<SelectTrigger className="w-full max-w-[200px] bg-background">
-							<SelectValue placeholder="Alla typer" />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value="all">Alla typer</SelectItem>
-							{COMPETITION_TYPE_FILTER_OPTIONS.map((option) => (
-								<SelectItem key={option.value} value={option.value}>
-									{option.label}
-								</SelectItem>
-							))}
-						</SelectContent>
-					</Select>
+					<MultiSelectFilter
+						placeholder="Alla sporter"
+						options={SPORT_OPTIONS}
+						selected={sportFilter}
+						onChange={(values) => setColumnFilter('sport', values)}
+						className="max-w-[180px]"
+					/>
+					<MultiSelectFilter
+						placeholder="Alla typer"
+						options={COMPETITION_TYPE_FILTER_OPTIONS}
+						selected={typeFilter}
+						onChange={(values) => setColumnFilter('type', values)}
+						className="max-w-[200px]"
+					/>
+					{handlerFilterOptions.length > 0 ? (
+						<MultiSelectFilter
+							placeholder="Alla hundförare"
+							options={handlerFilterOptions}
+							selected={handlerFilter}
+							onChange={(values) => setColumnFilter('handler', values)}
+							className="max-w-[220px]"
+						/>
+					) : null}
 					{activeTab === 'upcoming' ? (
-						<Select
-							value={statusFilter}
-							onValueChange={(value) => setColumnFilter('status', value)}
-						>
-							<SelectTrigger className="w-full max-w-[200px] bg-background">
-								<SelectValue placeholder="Alla statusar" />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="all">Alla statusar</SelectItem>
-								{COMPETITION_STATUS_OPTIONS.map((option) => (
-									<SelectItem key={option.value} value={option.value}>
-										{option.label}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
+						<MultiSelectFilter
+							placeholder="Alla statusar"
+							options={COMPETITION_STATUS_OPTIONS}
+							selected={statusFilter}
+							onChange={(values) => setColumnFilter('status', values)}
+							className="max-w-[200px]"
+						/>
 					) : (
-						<Select
-							value={resultsFilter}
-							onValueChange={(value) => setColumnFilter('results', value)}
-						>
-							<SelectTrigger className="w-full max-w-[220px] bg-background">
-								<SelectValue placeholder="Alla resultat" />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="all">Alla resultat</SelectItem>
-								<SelectItem value="missing_results">Saknar resultat</SelectItem>
-							</SelectContent>
-						</Select>
+						<MultiSelectFilter
+							placeholder="Alla resultat"
+							options={RESULTS_FILTER_OPTIONS}
+							selected={resultsFilter}
+							onChange={(values) => setColumnFilter('results', values)}
+							className="max-w-[220px]"
+						/>
 					)}
 				</div>
 
@@ -499,6 +518,12 @@ export function CompetitionsTable({
 														competition.rally_details?.number_of_starts,
 												})}
 											</p>
+											{formatCompetitionHandlers(competition.entries) !==
+											'—' ? (
+												<p className="mt-1 text-xs text-muted-foreground">
+													{formatCompetitionHandlers(competition.entries)}
+												</p>
+											) : null}
 											{city ? (
 												<p className="mt-2 flex items-start gap-1.5 text-xs text-muted-foreground">
 													<MapPin
@@ -658,6 +683,44 @@ function ActionButtons({
 function formatCompetitionCity(location: string | null | undefined) {
 	if (!location) return null
 	return cityFromAddress(location)
+}
+
+function competitionHandlerIds(
+	entries: CompetitionListItem['entries'],
+): string[] {
+	return [
+		...new Set(
+			entries.flatMap((entry) => (entry.handler_id ? [entry.handler_id] : [])),
+		),
+	]
+}
+
+function formatCompetitionHandlers(entries: CompetitionListItem['entries']) {
+	const names = [
+		...new Set(
+			entries
+				.map((entry) => entry.handler?.full_name?.trim())
+				.filter((name): name is string => Boolean(name)),
+		),
+	]
+
+	return names.length > 0 ? names.join(', ') : '—'
+}
+
+const multiSelectFilterFn: FilterFn<CompetitionListItem> = (
+	row,
+	columnId,
+	filterValue,
+) => {
+	const selected = filterValue as string[] | undefined
+	if (!selected || selected.length === 0) return true
+
+	const cellValue = row.getValue(columnId)
+	if (Array.isArray(cellValue)) {
+		return cellValue.some((value) => selected.includes(String(value)))
+	}
+
+	return selected.includes(String(cellValue))
 }
 
 const searchFilterFn: FilterFn<CompetitionListItem> = (

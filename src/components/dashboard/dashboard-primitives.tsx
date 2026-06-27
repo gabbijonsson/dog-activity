@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react'
 
 import { Button } from '#/components/ui/button.tsx'
-import { cn } from '#/lib/utils.ts'
 
 const SKELETON_IDS = ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8'] as const
 
@@ -60,32 +59,6 @@ export function ErrorState({
 					Försök igen
 				</Button>
 			) : null}
-		</div>
-	)
-}
-
-export function EventTypeLegend() {
-	const items = [
-		{ label: 'Anmälan öppnar', className: 'bg-event-sign-up-open' },
-		{ label: 'Anmälan stänger', className: 'bg-event-sign-up-close' },
-		{ label: 'Betalningsdatum', className: 'bg-event-payment' },
-		{ label: 'Tävlingsdag', className: 'bg-event-day' },
-	] as const
-
-	return (
-		<div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-			{items.map(({ label, className }) => (
-				<div
-					key={label}
-					className="flex items-center gap-1.5 text-xs text-muted-foreground"
-				>
-					<span
-						className={cn('size-2 rounded-full', className)}
-						aria-hidden="true"
-					/>
-					{label}
-				</div>
-			))}
 		</div>
 	)
 }
