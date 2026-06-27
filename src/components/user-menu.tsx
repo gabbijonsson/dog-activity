@@ -1,5 +1,7 @@
 import { Link } from '@tanstack/react-router'
-import { LogOutIcon } from 'lucide-react'
+import { LogOutIcon, MoonIcon } from 'lucide-react'
+import { useTheme } from 'next-themes'
+import { useEffect, useState } from 'react'
 
 import { useAuth } from '#/components/auth-provider.tsx'
 import { Avatar, AvatarFallback } from '#/components/ui/avatar.tsx'
@@ -12,6 +14,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '#/components/ui/dropdown-menu.tsx'
+import { Switch } from '#/components/ui/switch.tsx'
 
 function getInitials(name: string | null | undefined, email: string) {
 	if (name?.trim()) {
@@ -22,6 +25,37 @@ function getInitials(name: string | null | undefined, email: string) {
 		return name.slice(0, 2).toUpperCase()
 	}
 	return email.slice(0, 2).toUpperCase()
+}
+
+function ThemeMenuSwitch() {
+	const { resolvedTheme, setTheme } = useTheme()
+	const [mounted, setMounted] = useState(false)
+
+	useEffect(() => {
+		setMounted(true)
+	}, [])
+
+	const isDark = mounted && resolvedTheme === 'dark'
+
+	return (
+		<DropdownMenuItem
+			onSelect={(event) => event.preventDefault()}
+			className="flex items-center justify-between gap-2"
+		>
+			<span className="flex items-center gap-2">
+				<MoonIcon aria-hidden="true" />
+				Mörkt läge
+			</span>
+			<Switch
+				size="sm"
+				checked={isDark}
+				disabled={!mounted}
+				onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
+				onClick={(event) => event.stopPropagation()}
+				aria-label="Mörkt läge"
+			/>
+		</DropdownMenuItem>
+	)
 }
 
 export function UserMenu() {
@@ -69,6 +103,8 @@ export function UserMenu() {
 						<p className="text-xs text-muted-foreground">{email}</p>
 					</div>
 				</DropdownMenuLabel>
+				<DropdownMenuSeparator />
+				<ThemeMenuSwitch />
 				<DropdownMenuSeparator />
 				<DropdownMenuItem
 					variant="destructive"
