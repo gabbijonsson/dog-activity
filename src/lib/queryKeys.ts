@@ -41,4 +41,8 @@ export const queryKeys = {
 		all: ['origin-favorites'] as const,
 		list: () => [...queryKeys.originFavorites.all, 'list'] as const,
 	},
+	promotion: {
+		all: ['promotion'] as const,
+		context: () => [...queryKeys.promotion.all, 'context'] as const,
+	},
 } as const

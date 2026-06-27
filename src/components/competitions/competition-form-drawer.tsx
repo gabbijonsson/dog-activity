@@ -34,6 +34,7 @@ import {
 	NOSEWORK_CLASS_OPTIONS,
 	NOSEWORK_OFFICIAL_STATUS_OPTIONS,
 	NOSEWORK_TYPE_OPTIONS,
+	RALLY_LEVEL_OPTIONS,
 	RALLY_STARTS_OPTIONS,
 	SPORT_OPTIONS,
 } from '#/lib/competition-labels.ts'
@@ -44,10 +45,15 @@ import {
 } from '#/lib/competition-queries.ts'
 import { fetchDogsList } from '#/lib/dog-queries.ts'
 import {
+	buildDogPromotionWarnings,
+	promotionWarningForDog,
+} from '#/lib/dog-promotion-warnings.ts'
+import {
 	entryRequiresDogHandler,
 	hasEntryParticipants,
 } from '#/lib/entry-validation.ts'
 import { fetchProfilesList } from '#/lib/profile-queries.ts'
+import { fetchPromotionContext } from '#/lib/promotion-queries.ts'
 import { queryKeys } from '#/lib/queryKeys.ts'
 import {
 	type CompetitionFormInput,
@@ -74,6 +80,7 @@ const emptyValues: CompetitionFormInput = {
 	nosework_class: 'class_1',
 	nosework_official_status: 'official',
 	number_of_starts: 'single',
+	rally_level: 'nyborjare',
 	entry_dog_id: '',
 	entry_handler_id: '',
 	entry_status: 'interested',
@@ -122,6 +129,15 @@ export function CompetitionFormDrawer({
 		queryFn: async () => {
 			const supabase = getBrowserSupabase()
 			return fetchProfilesList(supabase)
+		},
+		enabled: open && !isEditing,
+	})
+
+	const { data: promotionContext } = useQuery({
+		queryKey: queryKeys.promotion.context(),
+		queryFn: async () => {
+			const supabase = getBrowserSupabase()
+			return fetchPromotionContext(supabase)
 		},
 		enabled: open && !isEditing,
 	})
@@ -387,6 +403,34 @@ export function CompetitionFormDrawer({
 									) : (
 										<div className="space-y-4 rounded-lg border border-border/70 bg-muted/20 p-4">
 											<p className="island-kicker">Rally</p>
+											<form.Field name="rally_level">
+												{(field) => (
+													<FieldShell label="Nivå" htmlFor={field.name}>
+														<Select
+															value={field.state.value}
+															onValueChange={(value) =>
+																field.handleChange(
+																	value as CompetitionFormInput['rally_level'],
+																)
+															}
+														>
+															<SelectTrigger id={field.name} className="w-full">
+																<SelectValue placeholder="Välj nivå" />
+															</SelectTrigger>
+															<SelectContent>
+																{RALLY_LEVEL_OPTIONS.map((option) => (
+																	<SelectItem
+																		key={option.value}
+																		value={option.value}
+																	>
+																		{option.label}
+																	</SelectItem>
+																))}
+															</SelectContent>
+														</Select>
+													</FieldShell>
+												)}
+											</form.Field>
 											<form.Field name="number_of_starts">
 												{(field) => (
 													<FieldShell
@@ -554,41 +598,70 @@ export function CompetitionFormDrawer({
 							{!isEditing && (
 								<div className="space-y-4 rounded-lg border border-border/70 bg-muted/20 p-4">
 									<p className="island-kicker">Tilldela tävling</p>
-									<form.Subscribe selector={(state) => state.values.sport}>
-										{(sport) => (
-											<form.Field name="entry_dog_id">
-												{(dogField) => (
-													<form.Field name="entry_handler_id">
-														{(handlerField) => (
-															<form.Field name="entry_status">
-																{(statusField) => (
-																	<EntryRegistrationFields
-																		sport={sport}
-																		enteredDogIds={new Set()}
-																		enteredHandlerIds={new Set()}
-																		dogs={dogs}
-																		handlers={handlers}
-																		dogId={dogField.state.value}
-																		handlerId={handlerField.state.value}
-																		status={statusField.state.value}
-																		onDogIdChange={dogField.handleChange}
-																		onHandlerIdChange={
-																			handlerField.handleChange
-																		}
-																		onStatusChange={statusField.handleChange}
-																		requireDogHandler={entryRequiresDogHandler(
-																			statusField.state.value,
-																		)}
-																		disabled={mutation.isPending}
-																		idPrefix="create-entry"
-																	/>
-																)}
-															</form.Field>
-														)}
-													</form.Field>
-												)}
-											</form.Field>
-										)}
+									<form.Subscribe
+										selector={(state) => ({
+											sport: state.values.sport,
+											noseworkType: state.values.nosework_type,
+											noseworkClass: state.values.nosework_class,
+											rallyLevel: state.values.rally_level,
+										})}
+									>
+										{({ sport, noseworkType, noseworkClass, rallyLevel }) => {
+											const dogPromotionWarnings = promotionContext
+												? buildDogPromotionWarnings(
+														dogs,
+														sport,
+														promotionContext,
+														{
+															noseworkType,
+															noseworkClass,
+															rallyLevel,
+														},
+													)
+												: new Map<string, string>()
+
+											return (
+												<form.Field name="entry_dog_id">
+													{(dogField) => (
+														<form.Field name="entry_handler_id">
+															{(handlerField) => (
+																<form.Field name="entry_status">
+																	{(statusField) => (
+																		<EntryRegistrationFields
+																			sport={sport}
+																			enteredDogIds={new Set()}
+																			enteredHandlerIds={new Set()}
+																			dogs={dogs}
+																			handlers={handlers}
+																			dogId={dogField.state.value}
+																			handlerId={handlerField.state.value}
+																			status={statusField.state.value}
+																			onDogIdChange={dogField.handleChange}
+																			onHandlerIdChange={
+																				handlerField.handleChange
+																			}
+																			onStatusChange={statusField.handleChange}
+																			requireDogHandler={entryRequiresDogHandler(
+																				statusField.state.value,
+																			)}
+																			disabled={mutation.isPending}
+																			idPrefix="create-entry"
+																			dogPromotionWarnings={
+																				dogPromotionWarnings
+																			}
+																			selectedDogPromotionWarning={promotionWarningForDog(
+																				dogPromotionWarnings,
+																				dogField.state.value,
+																			)}
+																		/>
+																	)}
+																</form.Field>
+															)}
+														</form.Field>
+													)}
+												</form.Field>
+											)
+										}}
 									</form.Subscribe>
 								</div>
 							)}

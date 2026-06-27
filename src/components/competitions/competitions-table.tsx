@@ -47,6 +47,7 @@ import {
 	fetchCompetitionsList,
 } from '#/lib/competition-queries.ts'
 import { formatDisplayDateTime } from '#/lib/dates.ts'
+import { formatLogistik } from '#/lib/logistik.ts'
 import { queryKeys } from '#/lib/queryKeys.ts'
 import { sportLabel } from '#/lib/sports.ts'
 import { getBrowserSupabase } from '#/lib/supabase.ts'
@@ -137,6 +138,20 @@ export function CompetitionsTable({
 				cell: ({ row }) => row.original.location ?? '—',
 			},
 			{
+				id: 'logistik',
+				accessorFn: (row) =>
+					formatLogistik({
+						driveDistanceMeters: row.drive_distance_meters,
+						driveDurationSeconds: row.drive_duration_seconds,
+					}) ?? '',
+				header: ({ column }) => <SortHeader column={column} label="Logistik" />,
+				cell: ({ row }) =>
+					formatLogistik({
+						driveDistanceMeters: row.original.drive_distance_meters,
+						driveDurationSeconds: row.original.drive_duration_seconds,
+					}) ?? '—',
+			},
+			{
 				id: 'status',
 				accessorFn: (row) => row.status,
 				header: 'Status',
@@ -199,12 +214,13 @@ export function CompetitionsTable({
 	const typeFilter =
 		(table.getColumn('type')?.getFilterValue() as string | undefined) ?? 'all'
 	const statusFilter =
-		(table.getColumn('status')?.getFilterValue() as string | undefined) ??
-		'all'
+		(table.getColumn('status')?.getFilterValue() as string | undefined) ?? 'all'
 	const filteredRows = table.getRowModel().rows
 
 	function setColumnFilter(columnId: string, value: string) {
-		table.getColumn(columnId)?.setFilterValue(value === 'all' ? undefined : value)
+		table
+			.getColumn(columnId)
+			?.setFilterValue(value === 'all' ? undefined : value)
 	}
 
 	if (isLoading) {
@@ -324,7 +340,8 @@ export function CompetitionsTable({
 											{' · '}
 											{competitionTypeLabel(competition.sport, {
 												noseworkType: competition.nosework_details?.type,
-												rallyStarts: competition.rally_details?.number_of_starts,
+												rallyStarts:
+													competition.rally_details?.number_of_starts,
 											})}
 										</p>
 										{competition.location ? (
@@ -336,6 +353,19 @@ export function CompetitionsTable({
 												<span className="line-clamp-2">
 													{competition.location}
 												</span>
+											</p>
+										) : null}
+										{formatLogistik({
+											driveDistanceMeters: competition.drive_distance_meters,
+											driveDurationSeconds: competition.drive_duration_seconds,
+										}) ? (
+											<p className="mt-1 text-xs text-muted-foreground">
+												{formatLogistik({
+													driveDistanceMeters:
+														competition.drive_distance_meters,
+													driveDurationSeconds:
+														competition.drive_duration_seconds,
+												})}
 											</p>
 										) : null}
 									</button>

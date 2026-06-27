@@ -38,6 +38,7 @@ import {
 	noseworkClassLabel,
 	noseworkOfficialStatusLabel,
 	noseworkTypeLabel,
+	rallyLevelLabel,
 	rallyStartsLabel,
 } from '#/lib/competition-labels.ts'
 import {
@@ -170,7 +171,11 @@ export function CompetitionDetailDrawer({
 
 							{competition.sport === 'rally_obedience' &&
 								competition.rally_details && (
-									<dl className="rounded-lg border border-border/70 bg-muted/20 p-4 text-sm">
+									<dl className="grid grid-cols-2 gap-3 rounded-lg border border-border/70 bg-muted/20 p-4 text-sm">
+										<DetailRow
+											label="Nivå"
+											value={rallyLevelLabel(competition.rally_details.level)}
+										/>
 										<DetailRow
 											label="Starter"
 											value={rallyStartsLabel(
@@ -235,6 +240,10 @@ export function CompetitionDetailDrawer({
 								competitionId={competition.id}
 								sport={competition.sport}
 								entries={competition.entries}
+								noseworkType={competition.nosework_details?.type}
+								noseworkClass={competition.nosework_details?.class}
+								rallyLevel={competition.rally_details?.level}
+								numberOfStarts={competition.rally_details?.number_of_starts}
 							/>
 
 							<section>

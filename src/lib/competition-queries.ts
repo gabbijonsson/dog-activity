@@ -24,6 +24,13 @@ export type CompetitionEntry = Pick<
 		Database['public']['Tables']['profiles']['Row'],
 		'id' | 'full_name' | 'email'
 	> | null
+	nosework_results:
+		| Database['public']['Tables']['nosework_entry_results']['Row']
+		| null
+	rally_start_results: Pick<
+		Database['public']['Tables']['rally_start_results']['Row'],
+		'start_number' | 'points'
+	>[]
 }
 
 export type CompetitionDetail = Competition & {
@@ -36,18 +43,14 @@ export type CompetitionDetail = Competition & {
 }
 
 export type CompetitionListItem = Competition & {
-	nosework_details:
-		| Pick<
-				Database['public']['Tables']['nosework_details']['Row'],
-				'type'
-		  >
-		| null
-	rally_details:
-		| Pick<
-				Database['public']['Tables']['rally_details']['Row'],
-				'number_of_starts'
-		  >
-		| null
+	nosework_details: Pick<
+		Database['public']['Tables']['nosework_details']['Row'],
+		'type'
+	> | null
+	rally_details: Pick<
+		Database['public']['Tables']['rally_details']['Row'],
+		'number_of_starts' | 'level'
+	> | null
 	entries: Pick<
 		Database['public']['Tables']['entries']['Row'],
 		'id' | 'status'
@@ -84,6 +87,7 @@ export function formInputToSavePayload(
 		nosework_class: input.nosework_class,
 		nosework_official_status: input.nosework_official_status,
 		number_of_starts: input.number_of_starts,
+		rally_level: input.rally_level,
 	}
 }
 
@@ -110,6 +114,7 @@ export function competitionToFormInput(
 		nosework_class: competition.nosework_details?.class,
 		nosework_official_status: competition.nosework_details?.official_status,
 		number_of_starts: competition.rally_details?.number_of_starts,
+		rally_level: competition.rally_details?.level,
 		entry_dog_id: '',
 		entry_handler_id: '',
 		entry_status: 'interested',
@@ -137,7 +142,7 @@ export async function fetchCompetitionsList(
 	const { data, error } = await supabase
 		.from('competitions')
 		.select(
-			'*, nosework_details(type), rally_details(number_of_starts), entries(id, status)',
+			'*, nosework_details(type), rally_details(number_of_starts, level), entries(id, status)',
 		)
 		.order('event_date', { ascending: true })
 
@@ -156,7 +161,7 @@ export async function fetchCompetitionById(
 	const { data, error } = await supabase
 		.from('competitions')
 		.select(
-			'*, nosework_details(*), rally_details(*), entries(id, status, dog_id, handler_id, dog:dogs(id, name), handler:profiles(id, full_name, email)), calendar_events(*)',
+			'*, nosework_details(*), rally_details(*), entries(id, status, dog_id, handler_id, dog:dogs(id, name), handler:profiles(id, full_name, email), nosework_results:nosework_entry_results(*), rally_start_results(start_number, points)), calendar_events(*)',
 		)
 		.eq('id', id)
 		.maybeSingle()

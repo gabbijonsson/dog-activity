@@ -187,6 +187,67 @@ export type Database = {
 					},
 				]
 			}
+			dog_nosework_diploma_counts: {
+				Row: {
+					class: Database['public']['Enums']['nosework_class']
+					count: number
+					dog_id: string
+					id: string
+					type: Database['public']['Enums']['nosework_type']
+				}
+				Insert: {
+					class: Database['public']['Enums']['nosework_class']
+					count?: number
+					dog_id: string
+					id?: string
+					type: Database['public']['Enums']['nosework_type']
+				}
+				Update: {
+					class?: Database['public']['Enums']['nosework_class']
+					count?: number
+					dog_id?: string
+					id?: string
+					type?: Database['public']['Enums']['nosework_type']
+				}
+				Relationships: [
+					{
+						foreignKeyName: 'dog_nosework_diploma_counts_dog_id_fkey'
+						columns: ['dog_id']
+						isOneToOne: false
+						referencedRelation: 'dogs'
+						referencedColumns: ['id']
+					},
+				]
+			}
+			dog_rally_qualified_counts: {
+				Row: {
+					count: number
+					dog_id: string
+					id: string
+					level: Database['public']['Enums']['rally_level']
+				}
+				Insert: {
+					count?: number
+					dog_id: string
+					id?: string
+					level: Database['public']['Enums']['rally_level']
+				}
+				Update: {
+					count?: number
+					dog_id?: string
+					id?: string
+					level?: Database['public']['Enums']['rally_level']
+				}
+				Relationships: [
+					{
+						foreignKeyName: 'dog_rally_qualified_counts_dog_id_fkey'
+						columns: ['dog_id']
+						isOneToOne: false
+						referencedRelation: 'dogs'
+						referencedColumns: ['id']
+					},
+				]
+			}
 			entries: {
 				Row: {
 					competition_id: string
@@ -235,6 +296,50 @@ export type Database = {
 						columns: ['handler_id']
 						isOneToOne: false
 						referencedRelation: 'profiles'
+						referencedColumns: ['id']
+					},
+				]
+			}
+			nosework_entry_results: {
+				Row: {
+					diploma_result:
+						| Database['public']['Enums']['nosework_diploma_result']
+						| null
+					entry_id: string
+					search_1_placement: Database['public']['Enums']['competition_placement']
+					search_2_placement: Database['public']['Enums']['competition_placement']
+					search_3_placement: Database['public']['Enums']['competition_placement']
+					search_4_placement: Database['public']['Enums']['competition_placement']
+					total_placement: Database['public']['Enums']['competition_placement']
+				}
+				Insert: {
+					diploma_result?:
+						| Database['public']['Enums']['nosework_diploma_result']
+						| null
+					entry_id: string
+					search_1_placement?: Database['public']['Enums']['competition_placement']
+					search_2_placement?: Database['public']['Enums']['competition_placement']
+					search_3_placement?: Database['public']['Enums']['competition_placement']
+					search_4_placement?: Database['public']['Enums']['competition_placement']
+					total_placement?: Database['public']['Enums']['competition_placement']
+				}
+				Update: {
+					diploma_result?:
+						| Database['public']['Enums']['nosework_diploma_result']
+						| null
+					entry_id?: string
+					search_1_placement?: Database['public']['Enums']['competition_placement']
+					search_2_placement?: Database['public']['Enums']['competition_placement']
+					search_3_placement?: Database['public']['Enums']['competition_placement']
+					search_4_placement?: Database['public']['Enums']['competition_placement']
+					total_placement?: Database['public']['Enums']['competition_placement']
+				}
+				Relationships: [
+					{
+						foreignKeyName: 'nosework_entry_results_entry_id_fkey'
+						columns: ['entry_id']
+						isOneToOne: true
+						referencedRelation: 'entries'
 						referencedColumns: ['id']
 					},
 				]
@@ -319,14 +424,17 @@ export type Database = {
 			rally_details: {
 				Row: {
 					competition_id: string
+					level: Database['public']['Enums']['rally_level']
 					number_of_starts: Database['public']['Enums']['rally_starts']
 				}
 				Insert: {
 					competition_id: string
+					level?: Database['public']['Enums']['rally_level']
 					number_of_starts: Database['public']['Enums']['rally_starts']
 				}
 				Update: {
 					competition_id?: string
+					level?: Database['public']['Enums']['rally_level']
 					number_of_starts?: Database['public']['Enums']['rally_starts']
 				}
 				Relationships: [
@@ -335,6 +443,35 @@ export type Database = {
 						columns: ['competition_id']
 						isOneToOne: true
 						referencedRelation: 'competitions'
+						referencedColumns: ['id']
+					},
+				]
+			}
+			rally_start_results: {
+				Row: {
+					entry_id: string
+					id: string
+					points: number | null
+					start_number: number
+				}
+				Insert: {
+					entry_id: string
+					id?: string
+					points?: number | null
+					start_number: number
+				}
+				Update: {
+					entry_id?: string
+					id?: string
+					points?: number | null
+					start_number?: number
+				}
+				Relationships: [
+					{
+						foreignKeyName: 'rally_start_results_entry_id_fkey'
+						columns: ['entry_id']
+						isOneToOne: false
+						referencedRelation: 'entries'
 						referencedColumns: ['id']
 					},
 				]
@@ -352,6 +489,7 @@ export type Database = {
 				| 'sign_up_close'
 				| 'payment'
 				| 'event_day'
+			competition_placement: 'ingen' | 'place_1' | 'place_2' | 'place_3'
 			entry_status:
 				| 'interested'
 				| 'signed_up'
@@ -359,6 +497,7 @@ export type Database = {
 				| 'reserve_slot'
 				| 'paid'
 			nosework_class: 'class_1' | 'class_2' | 'class_3' | 'elit'
+			nosework_diploma_result: 'inget_diplom' | 'diplom'
 			nosework_official_status: 'official' | 'unofficial' | 'summit'
 			nosework_type:
 				| 'tsm'
@@ -366,6 +505,7 @@ export type Database = {
 				| 'tem_inomhus'
 				| 'tem_fordon'
 				| 'tem_utomhus'
+			rally_level: 'nyborjare' | 'fortsattning' | 'avancerad' | 'mastare'
 			rally_starts: 'single' | 'double' | 'triple'
 			sport: 'nosework' | 'rally_obedience'
 			user_role: 'admin' | 'user'
@@ -505,6 +645,7 @@ export const Constants = {
 				'payment',
 				'event_day',
 			],
+			competition_placement: ['ingen', 'place_1', 'place_2', 'place_3'],
 			entry_status: [
 				'interested',
 				'signed_up',
@@ -513,6 +654,7 @@ export const Constants = {
 				'paid',
 			],
 			nosework_class: ['class_1', 'class_2', 'class_3', 'elit'],
+			nosework_diploma_result: ['inget_diplom', 'diplom'],
 			nosework_official_status: ['official', 'unofficial', 'summit'],
 			nosework_type: [
 				'tsm',
@@ -521,6 +663,7 @@ export const Constants = {
 				'tem_fordon',
 				'tem_utomhus',
 			],
+			rally_level: ['nyborjare', 'fortsattning', 'avancerad', 'mastare'],
 			rally_starts: ['single', 'double', 'triple'],
 			sport: ['nosework', 'rally_obedience'],
 			user_role: ['admin', 'user'],

@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 
 import { useAuth } from '#/components/auth-provider.tsx'
 import { EntryRegistrationFields } from '#/components/competitions/entry-registration-fields.tsx'
+import { EntryResultsFields } from '#/components/competitions/entry-results-fields.tsx'
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -19,6 +20,10 @@ import {
 import { Button } from '#/components/ui/button.tsx'
 import type { CompetitionEntry } from '#/lib/competition-queries.ts'
 import type { Database } from '#/lib/database.types.ts'
+import {
+	buildDogPromotionWarnings,
+	promotionWarningForDog,
+} from '#/lib/dog-promotion-warnings.ts'
 import { fetchDogsList } from '#/lib/dog-queries.ts'
 import {
 	canAssignCompetition,
@@ -27,6 +32,7 @@ import {
 } from '#/lib/entry-options.ts'
 import { entryRequiresDogHandler } from '#/lib/entry-validation.ts'
 import { fetchProfilesList } from '#/lib/profile-queries.ts'
+import { fetchPromotionContext } from '#/lib/promotion-queries.ts'
 import { queryKeys } from '#/lib/queryKeys.ts'
 import { type EntryCreateInput, entryCreateSchema } from '#/lib/schemas.ts'
 import { getBrowserSupabase } from '#/lib/supabase.ts'
@@ -40,6 +46,10 @@ import {
 
 type Sport = Database['public']['Enums']['sport']
 type EntryStatus = Database['public']['Enums']['entry_status']
+type NoseworkType = Database['public']['Enums']['nosework_type']
+type NoseworkClass = Database['public']['Enums']['nosework_class']
+type RallyLevel = Database['public']['Enums']['rally_level']
+type RallyStarts = Database['public']['Enums']['rally_starts']
 
 const STATUS_ACCENT: Record<EntryStatus, string> = {
 	interested: 'border-l-[var(--signal)]',
@@ -53,6 +63,10 @@ interface CompetitionEntriesSectionProps {
 	competitionId: string
 	sport: Sport
 	entries: CompetitionEntry[]
+	noseworkType?: NoseworkType | null
+	noseworkClass?: NoseworkClass | null
+	rallyLevel?: RallyLevel | null
+	numberOfStarts?: RallyStarts | null
 }
 
 const emptyFormValues: EntryCreateInput = {
@@ -72,6 +86,7 @@ function invalidateEntryQueries(
 	})
 	void queryClient.invalidateQueries({ queryKey: queryKeys.dogs.all })
 	void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
+	void queryClient.invalidateQueries({ queryKey: queryKeys.promotion.all })
 }
 
 function enteredDogIdsForEntry(
@@ -91,9 +106,7 @@ function enteredHandlerIdsForEntry(
 ): Set<string> {
 	return new Set(
 		entries.flatMap((entry) =>
-			entry.id !== currentEntryId && entry.handler_id
-				? [entry.handler_id]
-				: [],
+			entry.id !== currentEntryId && entry.handler_id ? [entry.handler_id] : [],
 		),
 	)
 }
@@ -102,6 +115,10 @@ export function CompetitionEntriesSection({
 	competitionId,
 	sport,
 	entries,
+	noseworkType,
+	noseworkClass,
+	rallyLevel,
+	numberOfStarts,
 }: CompetitionEntriesSectionProps) {
 	const queryClient = useQueryClient()
 	const { user } = useAuth()
@@ -122,6 +139,22 @@ export function CompetitionEntriesSection({
 			return fetchProfilesList(supabase)
 		},
 	})
+
+	const { data: promotionContext } = useQuery({
+		queryKey: queryKeys.promotion.context(),
+		queryFn: async () => {
+			const supabase = getBrowserSupabase()
+			return fetchPromotionContext(supabase)
+		},
+	})
+
+	const dogPromotionWarnings = promotionContext
+		? buildDogPromotionWarnings(dogs, sport, promotionContext, {
+				noseworkType,
+				noseworkClass,
+				rallyLevel,
+			})
+		: new Map<string, string>()
 
 	const enteredDogIds = new Set(
 		entries.flatMap((entry) => (entry.dog_id ? [entry.dog_id] : [])),
@@ -254,6 +287,11 @@ export function CompetitionEntriesSection({
 													)}
 													disabled={createMutation.isPending}
 													idPrefix="assign-entry"
+													dogPromotionWarnings={dogPromotionWarnings}
+													selectedDogPromotionWarning={promotionWarningForDog(
+														dogPromotionWarnings,
+														dogField.state.value,
+													)}
 												/>
 											)}
 										</form.Field>
@@ -295,10 +333,7 @@ export function CompetitionEntriesSection({
 										<div className="min-w-0 flex-1 space-y-3">
 											<EntryRegistrationFields
 												sport={sport}
-												enteredDogIds={enteredDogIdsForEntry(
-													entries,
-													entry.id,
-												)}
+												enteredDogIds={enteredDogIdsForEntry(entries, entry.id)}
 												enteredHandlerIds={enteredHandlerIdsForEntry(
 													entries,
 													entry.id,
@@ -334,6 +369,19 @@ export function CompetitionEntriesSection({
 												)}
 												disabled={isUpdating}
 												idPrefix={`entry-${entry.id}`}
+												dogPromotionWarnings={dogPromotionWarnings}
+												selectedDogPromotionWarning={promotionWarningForDog(
+													dogPromotionWarnings,
+													entry.dog_id ?? '',
+												)}
+											/>
+											<EntryResultsFields
+												competitionId={competitionId}
+												sport={sport}
+												entry={entry}
+												numberOfStarts={numberOfStarts}
+												rallyLevel={rallyLevel}
+												disabled={isUpdating}
 											/>
 										</div>
 										<Button

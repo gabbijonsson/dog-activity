@@ -36,6 +36,8 @@ interface EntryRegistrationFieldsProps {
 	requireDogHandler?: boolean
 	disabled?: boolean
 	idPrefix?: string
+	dogPromotionWarnings?: Map<string, string>
+	selectedDogPromotionWarning?: string | null
 }
 
 export function EntryRegistrationFields({
@@ -53,6 +55,8 @@ export function EntryRegistrationFields({
 	requireDogHandler = false,
 	disabled = false,
 	idPrefix = 'entry',
+	dogPromotionWarnings,
+	selectedDogPromotionWarning,
 }: EntryRegistrationFieldsProps) {
 	const availableDogs = getAvailableDogs(dogs, enteredDogIds)
 	const availableHandlers = getAvailableHandlers(
@@ -108,11 +112,23 @@ export function EntryRegistrationFields({
 						) : null}
 						{availableDogs.map((dog) => (
 							<SelectItem key={dog.id} value={dog.id}>
-								{dog.name}
+								<span className="flex flex-col items-start gap-0.5">
+									<span>{dog.name}</span>
+									{dogPromotionWarnings?.get(dog.id) ? (
+										<span className="text-xs text-[var(--signal)]">
+											{dogPromotionWarnings.get(dog.id)}
+										</span>
+									) : null}
+								</span>
 							</SelectItem>
 						))}
 					</SelectContent>
 				</Select>
+				{selectedDogPromotionWarning ? (
+					<p className="text-xs text-[var(--signal)]">
+						{selectedDogPromotionWarning}
+					</p>
+				) : null}
 			</div>
 
 			<div className="space-y-1.5">
@@ -122,9 +138,7 @@ export function EntryRegistrationFields({
 				<Select
 					value={handlerSelectValue}
 					onValueChange={(value) =>
-						onHandlerIdChange(
-							value === EMPTY_PARTICIPANT_VALUE ? '' : value,
-						)
+						onHandlerIdChange(value === EMPTY_PARTICIPANT_VALUE ? '' : value)
 					}
 					disabled={disabled || availableHandlers.length === 0}
 				>

@@ -7,6 +7,11 @@ export type NoseworkClass = Database['public']['Enums']['nosework_class']
 export type NoseworkOfficialStatus =
 	Database['public']['Enums']['nosework_official_status']
 export type RallyStarts = Database['public']['Enums']['rally_starts']
+export type RallyLevel = Database['public']['Enums']['rally_level']
+export type NoseworkDiplomaResult =
+	Database['public']['Enums']['nosework_diploma_result']
+export type CompetitionPlacement =
+	Database['public']['Enums']['competition_placement']
 
 export type CompetitionStatus =
 	| 'empty'
@@ -43,6 +48,25 @@ const RALLY_STARTS_LABELS: Record<RallyStarts, string> = {
 	triple: 'Trippel start',
 }
 
+const RALLY_LEVEL_LABELS: Record<RallyLevel, string> = {
+	nyborjare: 'Nybörjare',
+	fortsattning: 'Fortsättning',
+	avancerad: 'Avancerad',
+	mastare: 'Mästare',
+}
+
+const NOSEWORK_DIPLOMA_RESULT_LABELS: Record<NoseworkDiplomaResult, string> = {
+	inget_diplom: 'Inget diplom',
+	diplom: 'Diplom',
+}
+
+const PLACEMENT_LABELS: Record<CompetitionPlacement, string> = {
+	ingen: 'Ingen',
+	place_1: '1',
+	place_2: '2',
+	place_3: '3',
+}
+
 const COMPETITION_STATUS_LABELS: Record<CompetitionStatus, string> = {
 	empty: 'Inga anmälningar',
 	interested: 'Tilldelad',
@@ -69,6 +93,20 @@ export function noseworkOfficialStatusLabel(
 
 export function rallyStartsLabel(starts: RallyStarts): string {
 	return RALLY_STARTS_LABELS[starts]
+}
+
+export function rallyLevelLabel(level: RallyLevel): string {
+	return RALLY_LEVEL_LABELS[level]
+}
+
+export function noseworkDiplomaResultLabel(
+	result: NoseworkDiplomaResult,
+): string {
+	return NOSEWORK_DIPLOMA_RESULT_LABELS[result]
+}
+
+export function placementLabel(placement: CompetitionPlacement): string {
+	return PLACEMENT_LABELS[placement]
 }
 
 export function competitionTypeLabel(
@@ -126,6 +164,21 @@ export const NOSEWORK_OFFICIAL_STATUS_OPTIONS = Object.entries(
 
 export const RALLY_STARTS_OPTIONS = Object.entries(RALLY_STARTS_LABELS).map(
 	([value, label]) => ({ value: value as RallyStarts, label }),
+)
+
+export const RALLY_LEVEL_OPTIONS = Object.entries(RALLY_LEVEL_LABELS).map(
+	([value, label]) => ({ value: value as RallyLevel, label }),
+)
+
+export const NOSEWORK_DIPLOMA_RESULT_OPTIONS = Object.entries(
+	NOSEWORK_DIPLOMA_RESULT_LABELS,
+).map(([value, label]) => ({
+	value: value as NoseworkDiplomaResult,
+	label,
+}))
+
+export const PLACEMENT_OPTIONS = Object.entries(PLACEMENT_LABELS).map(
+	([value, label]) => ({ value: value as CompetitionPlacement, label }),
 )
 
 export const SPORT_OPTIONS: { value: Sport; label: string }[] = [

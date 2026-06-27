@@ -55,13 +55,14 @@ async function upsertSportDetails(
 		return
 	}
 
-	if (!input.number_of_starts) {
+	if (!input.number_of_starts || !input.rally_level) {
 		throw new CompetitionSaveError('Rally-fält saknas')
 	}
 
 	const { error } = await supabase.from('rally_details').insert({
 		competition_id: competitionId,
 		number_of_starts: input.number_of_starts,
+		level: input.rally_level,
 	})
 	if (error) mapSaveError(error)
 }

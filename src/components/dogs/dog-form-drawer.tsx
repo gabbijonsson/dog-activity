@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { useAuth } from '#/components/auth-provider.tsx'
 import { SectionSkeleton } from '#/components/dashboard/dashboard-primitives.tsx'
 import { DatePickerField } from '#/components/dogs/date-picker-field.tsx'
+import { DogPriorCountsFields } from '#/components/dogs/dog-prior-counts-fields.tsx'
 import { Button } from '#/components/ui/button.tsx'
 import { Input } from '#/components/ui/input.tsx'
 import { Label } from '#/components/ui/label.tsx'
@@ -19,7 +20,13 @@ import {
 	SheetTitle,
 } from '#/components/ui/sheet.tsx'
 import { Textarea } from '#/components/ui/textarea.tsx'
-import { createDog, fetchDogById, updateDog } from '#/lib/dog-queries.ts'
+import {
+	emptyPriorNoseworkDiplomas,
+	emptyPriorRallyQualified,
+	mergePriorNoseworkDiplomas,
+	mergePriorRallyQualified,
+} from '#/lib/dog-prior-counts.ts'
+import { createDog, fetchDogFormData, updateDog } from '#/lib/dog-queries.ts'
 import { queryKeys } from '#/lib/queryKeys.ts'
 import { type DogInput, dogSchema } from '#/lib/schemas.ts'
 import { getBrowserSupabase } from '#/lib/supabase.ts'
@@ -30,6 +37,8 @@ const emptyValues: DogInput = {
 	date_of_birth: '',
 	withers_height_cm: '',
 	notes: '',
+	prior_nosework_diplomas: emptyPriorNoseworkDiplomas(),
+	prior_rally_qualified: emptyPriorRallyQualified(),
 }
 
 interface DogFormDrawerProps {
@@ -49,12 +58,12 @@ export function DogFormDrawer({
 	const { user } = useAuth()
 	const isEditing = !!dogId
 
-	const { data: existingDog, isLoading } = useQuery({
+	const { data: existingDogData, isLoading } = useQuery({
 		queryKey: queryKeys.dogs.detail(dogId ?? 'new'),
 		queryFn: async () => {
 			if (!dogId) return null
 			const supabase = getBrowserSupabase()
-			return fetchDogById(supabase, dogId)
+			return fetchDogFormData(supabase, dogId)
 		},
 		enabled: open && isEditing,
 	})
@@ -72,6 +81,7 @@ export function DogFormDrawer({
 		},
 		onSuccess: (dog) => {
 			void queryClient.invalidateQueries({ queryKey: queryKeys.dogs.all })
+			void queryClient.invalidateQueries({ queryKey: queryKeys.promotion.all })
 			toast.success(isEditing ? 'Hund uppdaterad' : 'Hund tillagd')
 			onOpenChange(false)
 			onSaved?.(dog.id)
@@ -101,19 +111,22 @@ export function DogFormDrawer({
 			return
 		}
 
-		if (isEditing && existingDog) {
+		if (isEditing && existingDogData) {
+			const { dog, priorCounts } = existingDogData
 			form.reset({
-				name: existingDog.name,
-				breed: existingDog.breed ?? '',
-				date_of_birth: existingDog.date_of_birth ?? '',
+				name: dog.name,
+				breed: dog.breed ?? '',
+				date_of_birth: dog.date_of_birth ?? '',
 				withers_height_cm:
-					existingDog.withers_height_cm != null
-						? String(existingDog.withers_height_cm)
-						: '',
-				notes: existingDog.notes ?? '',
+					dog.withers_height_cm != null ? String(dog.withers_height_cm) : '',
+				notes: dog.notes ?? '',
+				prior_nosework_diplomas: mergePriorNoseworkDiplomas(
+					priorCounts.nosework,
+				),
+				prior_rally_qualified: mergePriorRallyQualified(priorCounts.rally),
 			})
 		}
-	}, [open, isEditing, existingDog, form])
+	}, [open, isEditing, existingDogData, form])
 
 	return (
 		<Sheet open={open} onOpenChange={onOpenChange}>
@@ -246,6 +259,30 @@ export function DogFormDrawer({
 											}
 										/>
 									</div>
+								)}
+							</form.Field>
+
+							<form.Field name="prior_nosework_diplomas">
+								{(noseworkField) => (
+									<form.Field name="prior_rally_qualified">
+										{(rallyField) => (
+											<DogPriorCountsFields
+												noseworkValues={noseworkField.state.value}
+												rallyValues={rallyField.state.value}
+												disabled={mutation.isPending}
+												onNoseworkChange={(index, count) => {
+													const next = [...noseworkField.state.value]
+													next[index] = { ...next[index], count }
+													noseworkField.handleChange(next)
+												}}
+												onRallyChange={(index, count) => {
+													const next = [...rallyField.state.value]
+													next[index] = { ...next[index], count }
+													rallyField.handleChange(next)
+												}}
+											/>
+										)}
+									</form.Field>
 								)}
 							</form.Field>
 						</SheetBody>

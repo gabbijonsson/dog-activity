@@ -1,4 +1,8 @@
 import type { Database } from '#/lib/database.types.ts'
+import {
+	fetchDogPriorCounts,
+	saveDogPriorCounts,
+} from '#/lib/promotion-queries.ts'
 import type { DogInput } from '#/lib/schemas.ts'
 import type { TypedSupabaseClient } from '#/lib/supabase.ts'
 
@@ -99,6 +103,30 @@ export async function fetchDogById(
 	return dog
 }
 
+async function saveDogPriorCountsFromInput(
+	supabase: TypedSupabaseClient,
+	dogId: string,
+	input: DogInput,
+) {
+	await saveDogPriorCounts(
+		supabase,
+		dogId,
+		input.prior_nosework_diplomas,
+		input.prior_rally_qualified,
+	)
+}
+
+export async function fetchDogFormData(
+	supabase: TypedSupabaseClient,
+	id: string,
+) {
+	const dog = await fetchDogById(supabase, id)
+	if (!dog) return null
+
+	const priorCounts = await fetchDogPriorCounts(supabase, id)
+	return { dog, priorCounts }
+}
+
 export async function createDog(
 	supabase: TypedSupabaseClient,
 	input: DogInput,
@@ -114,6 +142,7 @@ export async function createDog(
 		.single()
 
 	if (error) throw error
+	await saveDogPriorCountsFromInput(supabase, data.id, input)
 	return data
 }
 
@@ -130,6 +159,7 @@ export async function updateDog(
 		.single()
 
 	if (error) throw error
+	await saveDogPriorCountsFromInput(supabase, id, input)
 	return data
 }
 

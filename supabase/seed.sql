@@ -142,8 +142,8 @@ BEGIN
   VALUES (v_comp_nw, 'tem_utomhus', 'class_2', 'official')
   ON CONFLICT (competition_id) DO NOTHING;
 
-  INSERT INTO public.rally_details (competition_id, number_of_starts)
-  VALUES (v_comp_rally, 'double')
+  INSERT INTO public.rally_details (competition_id, number_of_starts, level)
+  VALUES (v_comp_rally, 'double', 'fortsattning')
   ON CONFLICT (competition_id) DO NOTHING;
 
   DELETE FROM public.entries

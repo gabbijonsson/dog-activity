@@ -10,36 +10,6 @@ import {
  */
 export const placeholderSchema = z.object({})
 
-export const dogSchema = z.object({
-	name: z.string().trim().min(1, { error: 'Namn krävs' }),
-	breed: z.string(),
-	date_of_birth: z.string(),
-	withers_height_cm: z.string().refine(
-		(value) => {
-			const trimmed = value.trim()
-			if (trimmed.length === 0) return true
-			const parsed = Number.parseInt(trimmed, 10)
-			return (
-				Number.isFinite(parsed) &&
-				parsed > 0 &&
-				parsed <= 120 &&
-				/^\d+$/.test(trimmed)
-			)
-		},
-		{ error: 'Ange mankhöjd som ett heltal i cm (1–120)' },
-	),
-	notes: z.string(),
-})
-
-export type DogInput = z.infer<typeof dogSchema>
-
-export const loginSchema = z.object({
-	email: z.email({ error: 'Enter a valid email address' }),
-	password: z.string().min(1, { error: 'Password is required' }),
-})
-
-export type LoginInput = z.infer<typeof loginSchema>
-
 const entryStatusEnum = z.enum([
 	'interested',
 	'signed_up',
@@ -59,6 +29,62 @@ const noseworkTypeEnum = z.enum([
 const noseworkClassEnum = z.enum(['class_1', 'class_2', 'class_3', 'elit'])
 const noseworkOfficialStatusEnum = z.enum(['official', 'unofficial', 'summit'])
 const rallyStartsEnum = z.enum(['single', 'double', 'triple'])
+const rallyLevelEnum = z.enum([
+	'nyborjare',
+	'fortsattning',
+	'avancerad',
+	'mastare',
+])
+const noseworkDiplomaResultEnum = z.enum(['inget_diplom', 'diplom'])
+const competitionPlacementEnum = z.enum([
+	'ingen',
+	'place_1',
+	'place_2',
+	'place_3',
+])
+
+export const dogSchema = z.object({
+	name: z.string().trim().min(1, { error: 'Namn krävs' }),
+	breed: z.string(),
+	date_of_birth: z.string(),
+	withers_height_cm: z.string().refine(
+		(value) => {
+			const trimmed = value.trim()
+			if (trimmed.length === 0) return true
+			const parsed = Number.parseInt(trimmed, 10)
+			return (
+				Number.isFinite(parsed) &&
+				parsed > 0 &&
+				parsed <= 120 &&
+				/^\d+$/.test(trimmed)
+			)
+		},
+		{ error: 'Ange mankhöjd som ett heltal i cm (1–120)' },
+	),
+	notes: z.string(),
+	prior_nosework_diplomas: z.array(
+		z.object({
+			type: noseworkTypeEnum,
+			class: noseworkClassEnum,
+			count: z.number().int().min(0).max(99),
+		}),
+	),
+	prior_rally_qualified: z.array(
+		z.object({
+			level: rallyLevelEnum,
+			count: z.number().int().min(0).max(99),
+		}),
+	),
+})
+
+export type DogInput = z.infer<typeof dogSchema>
+
+export const loginSchema = z.object({
+	email: z.email({ error: 'Enter a valid email address' }),
+	password: z.string().min(1, { error: 'Password is required' }),
+})
+
+export type LoginInput = z.infer<typeof loginSchema>
 
 export const competitionFormSchema = z
 	.object({
@@ -78,6 +104,7 @@ export const competitionFormSchema = z
 		nosework_class: noseworkClassEnum.optional(),
 		nosework_official_status: noseworkOfficialStatusEnum.optional(),
 		number_of_starts: rallyStartsEnum.optional(),
+		rally_level: rallyLevelEnum.optional(),
 		entry_dog_id: z.string(),
 		entry_handler_id: z.string(),
 		entry_status: entryStatusEnum,
@@ -107,12 +134,21 @@ export const competitionFormSchema = z
 			}
 		}
 
-		if (data.sport === 'rally_obedience' && !data.number_of_starts) {
-			ctx.addIssue({
-				code: 'custom',
-				message: 'Antal starter krävs',
-				path: ['number_of_starts'],
-			})
+		if (data.sport === 'rally_obedience') {
+			if (!data.number_of_starts) {
+				ctx.addIssue({
+					code: 'custom',
+					message: 'Antal starter krävs',
+					path: ['number_of_starts'],
+				})
+			}
+			if (!data.rally_level) {
+				ctx.addIssue({
+					code: 'custom',
+					message: 'Nivå krävs',
+					path: ['rally_level'],
+				})
+			}
 		}
 
 		if (
@@ -146,6 +182,7 @@ export const competitionSaveSchema = z
 		nosework_class: noseworkClassEnum.optional(),
 		nosework_official_status: noseworkOfficialStatusEnum.optional(),
 		number_of_starts: rallyStartsEnum.optional(),
+		rally_level: rallyLevelEnum.optional(),
 	})
 	.superRefine((data, ctx) => {
 		if (data.sport === 'nosework') {
@@ -162,12 +199,14 @@ export const competitionSaveSchema = z
 			}
 		}
 
-		if (data.sport === 'rally_obedience' && !data.number_of_starts) {
-			ctx.addIssue({
-				code: 'custom',
-				message: 'Rally-fält saknas',
-				path: ['sport'],
-			})
+		if (data.sport === 'rally_obedience') {
+			if (!data.number_of_starts || !data.rally_level) {
+				ctx.addIssue({
+					code: 'custom',
+					message: 'Rally-fält saknas',
+					path: ['sport'],
+				})
+			}
 		}
 
 		const opens = Date.parse(data.sign_up_opens)
@@ -201,7 +240,11 @@ export const competitionSaveSchema = z
 export type CompetitionSaveInput = z.infer<typeof competitionSaveSchema>
 
 function validateEntryParticipants(
-	data: { dog_id: string; handler_id: string; status: z.infer<typeof entryStatusEnum> },
+	data: {
+		dog_id: string
+		handler_id: string
+		status: z.infer<typeof entryStatusEnum>
+	},
 	ctx: z.RefinementCtx,
 ) {
 	if (!entryRequiresDogHandler(data.status)) return
@@ -255,3 +298,29 @@ export const entryDeleteSchema = z.object({
 })
 
 export type EntryDeleteInput = z.infer<typeof entryDeleteSchema>
+
+export const noseworkEntryResultsSchema = z.object({
+	entry_id: z.uuid(),
+	diploma_result: noseworkDiplomaResultEnum.nullable(),
+	search_1_placement: competitionPlacementEnum,
+	search_2_placement: competitionPlacementEnum,
+	search_3_placement: competitionPlacementEnum,
+	search_4_placement: competitionPlacementEnum,
+	total_placement: competitionPlacementEnum,
+})
+
+export type NoseworkEntryResultsInput = z.infer<
+	typeof noseworkEntryResultsSchema
+>
+
+export const rallyEntryResultsSchema = z.object({
+	entry_id: z.uuid(),
+	starts: z.array(
+		z.object({
+			start_number: z.number().int().min(1).max(3),
+			points: z.number().int().min(0).max(100).nullable(),
+		}),
+	),
+})
+
+export type RallyEntryResultsInput = z.infer<typeof rallyEntryResultsSchema>
