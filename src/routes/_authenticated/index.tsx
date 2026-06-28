@@ -39,19 +39,20 @@ function DashboardPage() {
 	)
 
 	return (
-		<div className="rise-in space-y-6">
+		<div className="rise-in">
 			<div className="grid gap-6 lg:grid-cols-[minmax(0,65fr)_minmax(0,35fr)] lg:items-start">
-				<MonthCalendar
-					onCompetitionSelect={handleCompetitionSelect}
-					onAddCompetition={handleAddCompetition}
-				/>
+				<div className="min-w-0 space-y-6">
+					<MonthCalendar
+						onCompetitionSelect={handleCompetitionSelect}
+						onAddCompetition={handleAddCompetition}
+					/>
+					<DeadlineCards onCompetitionSelect={handleCompetitionSelect} />
+				</div>
 
-				<aside className="min-w-0">
+				<aside className="min-w-0 lg:sticky lg:top-6">
 					<UpcomingEventsTable onCompetitionSelect={handleCompetitionSelect} />
 				</aside>
 			</div>
-
-			<DeadlineCards onCompetitionSelect={handleCompetitionSelect} />
 
 			<CompetitionDetailDrawer
 				competitionId={selectedCompetitionId}

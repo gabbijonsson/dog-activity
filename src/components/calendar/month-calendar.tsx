@@ -32,6 +32,12 @@ import {
 	calendarEventDisplayTitle,
 } from '#/lib/calendar-events.ts'
 import {
+	calendarEventChipClass,
+	calendarEventDotClass,
+	calendarEventLabelClass,
+	calendarEventVisualState,
+} from '#/lib/calendar-event-visual.ts'
+import {
 	type CalendarEventWithCompetition,
 	fetchCalendarEventsForRange,
 } from '#/lib/dashboard-queries.ts'
@@ -178,18 +184,18 @@ export function MonthCalendar({
 									setPopoverDay(date)
 									setPopoverOpen(true)
 								}}
-								className="w-full bg-transparent p-0 [--cell-size:1.5rem] sm:[--cell-size:1.75rem] md:[--cell-size:2rem]"
+								className="w-full bg-transparent p-0 [--cell-size:1.35rem] sm:[--cell-size:1.5rem] md:[--cell-size:1.65rem]"
 								classNames={{
 									root: 'w-full',
 									months: 'relative w-full',
-									month: 'w-full gap-4',
-									month_caption: 'mb-2 h-auto px-0',
+									month: 'w-full gap-3',
+									month_caption: 'mb-1 h-auto px-0',
 									month_grid: 'w-full table-fixed border-collapse',
 									weekdays: 'border-b border-border/60',
 									weekday:
-										'pb-2 text-center text-[0.8rem] font-normal text-muted-foreground',
+										'pb-1.5 text-center text-[0.75rem] font-normal text-muted-foreground',
 									week: 'border-0',
-									day: 'h-20 p-px text-left align-top sm:h-24 md:h-28',
+									day: 'h-14 p-px text-left align-top sm:h-16 md:h-[4.25rem]',
 									today: 'font-semibold',
 								}}
 								components={{
@@ -254,6 +260,7 @@ export function MonthCalendar({
 								<ul className="space-y-1">
 									{popoverDayEvents.map((event) => {
 										const config = CALENDAR_EVENT_CONFIG[event.event_type]
+										const visualState = calendarEventVisualState(event)
 										const title = calendarEventDisplayTitle(event)
 										const displayTitle = calendarEventLabelWithEmojis(
 											title,
@@ -275,7 +282,10 @@ export function MonthCalendar({
 													<span
 														className={cn(
 															'mt-1.5 size-2 shrink-0 rounded-full',
-															config.dotClass,
+															calendarEventDotClass(
+																event.event_type,
+																visualState,
+															),
 														)}
 														aria-hidden="true"
 													/>
@@ -283,12 +293,21 @@ export function MonthCalendar({
 														<span
 															className={cn(
 																'block text-xs font-semibold uppercase tracking-wide',
-																config.textClass,
+																calendarEventLabelClass(
+																	event.event_type,
+																	visualState,
+																),
 															)}
 														>
 															{config.label}
 														</span>
-														<span className="block truncate text-sm font-medium">
+														<span
+															className={cn(
+																'block truncate text-sm font-medium',
+																visualState !== 'default' &&
+																	'text-muted-foreground',
+															)}
+														>
 															{displayTitle}
 														</span>
 														{showTime && (
@@ -360,8 +379,8 @@ function CalendarDayWithEvents({
 					aria-hidden="true"
 				>
 					{visibleEvents.map((event) => {
-						const config = CALENDAR_EVENT_CONFIG[event.event_type]
 						const title = calendarEventDisplayTitle(event)
+						const visualState = calendarEventVisualState(event)
 						const displayTitle = calendarEventLabelWithEmojis(
 							title,
 							event.competitions?.entries ?? [],
@@ -371,8 +390,8 @@ function CalendarDayWithEvents({
 								key={event.id}
 								title={displayTitle}
 								className={cn(
-									'block w-full truncate rounded-sm px-1 py-px text-left text-[0.75rem] leading-snug font-medium text-black',
-									config.dotClass,
+									'block w-full truncate rounded-sm px-1 py-px text-left text-[0.6875rem] leading-snug font-medium',
+									calendarEventChipClass(event.event_type, visualState),
 									modifiers.outside && 'opacity-60',
 								)}
 							>
