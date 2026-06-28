@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ExternalLink, Pencil, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
-
+import { AddToCalendarButton } from '#/components/calendar/add-to-calendar-button.tsx'
 import { CompetitionEntriesSection } from '#/components/competitions/competition-entries-section.tsx'
 import { CompetitionStatusBadge } from '#/components/competitions/competition-status-badge.tsx'
 import {
@@ -33,6 +33,7 @@ import {
 	CALENDAR_EVENT_CONFIG,
 	calendarEventLabel,
 } from '#/lib/calendar-events.ts'
+import { calendarExportFromCompetitionEvent } from '#/lib/calendar-export.ts'
 import {
 	deriveCompetitionStatus,
 	noseworkClassLabel,
@@ -109,6 +110,9 @@ export function CompetitionDetailDrawer({
 	const status = competition
 		? deriveCompetitionStatus(competition.entries)
 		: null
+	const eventDayCalendarEvent = competition?.calendar_events.find(
+		(event) => event.event_type === 'event_day',
+	)
 
 	return (
 		<>
@@ -189,6 +193,16 @@ export function CompetitionDetailDrawer({
 								<DetailRow
 									label="Tävlingsdag"
 									value={formatDisplayDateTime(competition.event_date)}
+									action={
+										eventDayCalendarEvent ? (
+											<AddToCalendarButton
+												event={calendarExportFromCompetitionEvent(
+													eventDayCalendarEvent,
+													competition,
+												)}
+											/>
+										) : undefined
+									}
 								/>
 								<DetailRow
 									label="Anmälan öppnar"
@@ -254,6 +268,10 @@ export function CompetitionDetailDrawer({
 								<ul className="divide-y divide-border/60 rounded-lg border border-border/70">
 									{competition.calendar_events.map((event) => {
 										const config = CALENDAR_EVENT_CONFIG[event.event_type]
+										const exportEvent = calendarExportFromCompetitionEvent(
+											event,
+											competition,
+										)
 										return (
 											<li
 												key={event.id}
@@ -266,7 +284,7 @@ export function CompetitionDetailDrawer({
 													)}
 													aria-hidden="true"
 												/>
-												<div>
+												<div className="min-w-0 flex-1">
 													<p className="font-medium">
 														{calendarEventLabel(event.event_type)}
 													</p>
@@ -277,6 +295,7 @@ export function CompetitionDetailDrawer({
 															: formatDisplayDateTime(event.event_date)}
 													</p>
 												</div>
+												<AddToCalendarButton event={exportEvent} />
 											</li>
 										)
 									})}
@@ -346,17 +365,22 @@ function DetailRow({
 	label,
 	value,
 	className,
+	action,
 }: {
 	label: string
 	value: string
 	className?: string
+	action?: React.ReactNode
 }) {
 	return (
 		<div className={className}>
 			<dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
 				{label}
 			</dt>
-			<dd className="mt-1 font-medium">{value}</dd>
+			<dd className="mt-1 flex items-center gap-1.5">
+				<span className="font-medium">{value}</span>
+				{action}
+			</dd>
 		</div>
 	)
 }

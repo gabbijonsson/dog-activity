@@ -44,10 +44,15 @@ export type CalendarEventWithCompetition = CalendarEvent & {
 		| (Pick<Competition, 'id' | 'name' | 'sport' | 'location'> & {
 				nosework_details: {
 					type: Database['public']['Enums']['nosework_type']
+					official_status: Database['public']['Enums']['nosework_official_status']
+				} | null
+				rally_details: {
+					number_of_starts: Database['public']['Enums']['rally_starts']
 				} | null
 				entries: Array<{
 					status: Database['public']['Enums']['entry_status']
 					handler: ProfileHandlerFields | null
+					dog: Pick<Database['public']['Tables']['dogs']['Row'], 'name'> | null
 				}>
 		  })
 		| null
@@ -127,7 +132,7 @@ const competitionWithEntriesSelect =
 	'*, nosework_details(type), rally_details(number_of_starts), entries(id, status, handler_id, handler:profiles(id, full_name), dog:dogs(name))'
 
 const calendarEventCompetitionSelect =
-	'id, name, sport, location, nosework_details(type), entries(status, handler:profiles(id, full_name, calendar_emoji))'
+	'id, name, sport, location, nosework_details(type, official_status), rally_details(number_of_starts), entries(status, handler:profiles(id, full_name, calendar_emoji), dog:dogs(name))'
 
 const FULLY_REGISTERED_STATUSES = new Set(['signed_up', 'paid'])
 

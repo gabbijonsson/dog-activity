@@ -12,6 +12,7 @@ import {
 } from 'date-fns'
 import { CalendarPlus } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
+import { AddToCalendarButton } from '#/components/calendar/add-to-calendar-button.tsx'
 import {
 	ErrorState,
 	SectionSkeleton,
@@ -27,16 +28,17 @@ import {
 	PopoverTitle,
 } from '#/components/ui/popover.tsx'
 import {
-	CALENDAR_EVENT_CONFIG,
-	type CalendarEventType,
-	calendarEventDisplayTitle,
-} from '#/lib/calendar-events.ts'
-import {
 	calendarEventChipClass,
 	calendarEventDotClass,
 	calendarEventLabelClass,
 	calendarEventVisualState,
 } from '#/lib/calendar-event-visual.ts'
+import {
+	CALENDAR_EVENT_CONFIG,
+	type CalendarEventType,
+	calendarEventDisplayTitle,
+} from '#/lib/calendar-events.ts'
+import { calendarExportFromEvent } from '#/lib/calendar-export.ts'
 import {
 	type CalendarEventWithCompetition,
 	fetchCalendarEventsForRange,
@@ -271,63 +273,69 @@ export function MonthCalendar({
 											event.event_type !== 'sign_up_close'
 										return (
 											<li key={event.id}>
-												<button
-													type="button"
-													className="flex w-full items-start gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-muted/70"
-													onClick={() => {
-														onCompetitionSelect(event.competition_id)
-														setPopoverOpen(false)
-													}}
-												>
-													<span
-														className={cn(
-															'mt-1.5 size-2 shrink-0 rounded-full',
-															calendarEventDotClass(
-																event.event_type,
-																visualState,
-															),
-														)}
-														aria-hidden="true"
-													/>
-													<span className="min-w-0">
+												<div className="flex items-start gap-1">
+													<button
+														type="button"
+														className="flex min-w-0 flex-1 items-start gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-muted/70"
+														onClick={() => {
+															onCompetitionSelect(event.competition_id)
+															setPopoverOpen(false)
+														}}
+													>
 														<span
 															className={cn(
-																'block text-xs font-semibold uppercase tracking-wide',
-																calendarEventLabelClass(
+																'mt-1.5 size-2 shrink-0 rounded-full',
+																calendarEventDotClass(
 																	event.event_type,
 																	visualState,
 																),
 															)}
-														>
-															{config.label}
-														</span>
-														<span
-															className={cn(
-																'block truncate text-sm font-medium',
-																visualState !== 'default' &&
-																	'text-muted-foreground',
-															)}
-														>
-															{displayTitle}
-														</span>
-														{showTime && (
-															<time
-																dateTime={event.event_date}
-																className="block text-xs tabular-nums text-muted-foreground"
+															aria-hidden="true"
+														/>
+														<span className="min-w-0">
+															<span
+																className={cn(
+																	'block text-xs font-semibold uppercase tracking-wide',
+																	calendarEventLabelClass(
+																		event.event_type,
+																		visualState,
+																	),
+																)}
 															>
-																{formatDisplayDateTime(event.event_date)}
-															</time>
-														)}
-														{event.competitions && (
-															<span className="block truncate text-xs text-muted-foreground">
-																{sportLabel(event.competitions.sport)}
-																{event.competitions.location
-																	? ` · ${event.competitions.location}`
-																	: ''}
+																{config.label}
 															</span>
-														)}
-													</span>
-												</button>
+															<span
+																className={cn(
+																	'block truncate text-sm font-medium',
+																	visualState !== 'default' &&
+																		'text-muted-foreground',
+																)}
+															>
+																{displayTitle}
+															</span>
+															{showTime && (
+																<time
+																	dateTime={event.event_date}
+																	className="block text-xs tabular-nums text-muted-foreground"
+																>
+																	{formatDisplayDateTime(event.event_date)}
+																</time>
+															)}
+															{event.competitions && (
+																<span className="block truncate text-xs text-muted-foreground">
+																	{sportLabel(event.competitions.sport)}
+																	{event.competitions.location
+																		? ` · ${event.competitions.location}`
+																		: ''}
+																</span>
+															)}
+														</span>
+													</button>
+													<AddToCalendarButton
+														event={calendarExportFromEvent(event)}
+														className="mt-1.5"
+													/>
+												</div>
 											</li>
 										)
 									})}
